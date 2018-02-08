@@ -1,0 +1,15 @@
+{
+    "name": "Portfolio Item Health Summary",
+    "sdk": "2.1",
+    "version": "0.0.1",
+    "className": "com.ca.TechnicalServices.PortfolioItemHealthSummary",
+    "artifact": "",
+    "javascript": [
+        "src/javascript/utils/__ts-info-link.js",
+        "src/javascript/utils/__ts-logger.js",
+        "src/javascript/utils/__ts-utilities.js",
+        "src/javascript/SummaryRow.js",
+        "src/javascript/Stores.js",
+        "src/javascript/app.js"
+    ]
+}
