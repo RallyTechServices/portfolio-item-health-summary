@@ -38,10 +38,51 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             return Ext.create('com.ca.TechnicalServices.SummaryRow', {
                 FormattedID: group.name.FormattedID,
                 Name: group.name.Name,
+                PercentCompleteByStoryPoints: getPercentCompleteByStoryPoints(group),
+                PercentCompleteByStoryCount: getPercentCompleteByStoryCount(group),
+                RedYellowGreen: getRedYellowGreen(group),
+                CycleTimeMedian: getCycleTimeMedian(group),
+                CycleTimeTrend: getCycleTimeTrend(group),
+                ThroughputMedian: getThroughputMedian(group),
+                ThroughputTrend: getThroughputTrend(group),
+                WipRatio: getWipRatio(group)
             });
         });
         Ext.data.StoreManager.lookup(Stores.GRID_STORE_ID).loadData(data);
     }
+
+    function getPercentCompleteByStoryPoints(group) {
+        return 0;
+    }
+
+    function getPercentCompleteByStoryCount(group) {
+        return 0;
+    }
+
+    function getRedYellowGreen(group) {
+        return ""
+    }
+
+    function getCycleTimeMedian(group) {
+        return 0;
+    }
+
+    function getCycleTimeTrend(group) {
+        return "";
+    }
+
+    function getThroughputMedian(group) {
+        return 0;
+    }
+
+    function getThroughputTrend(group) {
+        return ""
+    }
+
+    function getWipRatio(group) {
+        return 0.0
+    }
+
 
     /***
      * Public methods

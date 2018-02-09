@@ -7,13 +7,13 @@
             0.0.1
     </title>
     <!--  (c) 2017 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Thu Feb 08 2018 23:43:38 GMT+0000 (UTC) -->
+    <!--  Build Date: Thu Feb 08 2018 23:59:53 GMT+0000 (UTC) -->
 
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Thu Feb 08 2018 23:43:38 GMT+0000 (UTC)";
+        var APP_BUILD_DATE = "Thu Feb 08 2018 23:59:53 GMT+0000 (UTC)";
         var ARTIFACT = "";
         var BUILDER = "ec2-user";
-        var CHECKSUM = "5181700511";
+        var CHECKSUM = "5944288195";
     </script>
 
     <script type="text/javascript" src="https://us1.rallydev.com/apps/2.1/sdk-debug.js"></script>
@@ -337,7 +337,7 @@ Ext.define('com.ca.TechnicalServices.SummaryRow', {
         { name: 'Name', type: 'string' },
         { name: 'PercentCompleteByStoryPoints', type: 'int' },
         { name: 'PercentCompleteByStoryCount', type: 'int' },
-        { name: 'RedYelloGreen', type: 'string' },
+        { name: 'RedYellowGreen', type: 'string' },
         { name: 'CycleTimeMedian', type: 'int' },
         { name: 'CycleTimeTrend', type: 'string' },
         { name: 'ThroughputMedian', type: 'int' },
@@ -386,10 +386,51 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             return Ext.create('com.ca.TechnicalServices.SummaryRow', {
                 FormattedID: group.name.FormattedID,
                 Name: group.name.Name,
+                PercentCompleteByStoryPoints: getPercentCompleteByStoryPoints(group),
+                PercentCompleteByStoryCount: getPercentCompleteByStoryCount(group),
+                RedYellowGreen: getRedYellowGreen(group),
+                CycleTimeMedian: getCycleTimeMedian(group),
+                CycleTimeTrend: getCycleTimeTrend(group),
+                ThroughputMedian: getThroughputMedian(group),
+                ThroughputTrend: getThroughputTrend(group),
+                WipRatio: getWipRatio(group)
             });
         });
         Ext.data.StoreManager.lookup(Stores.GRID_STORE_ID).loadData(data);
     }
+
+    function getPercentCompleteByStoryPoints(group) {
+        return 0;
+    }
+
+    function getPercentCompleteByStoryCount(group) {
+        return 0;
+    }
+
+    function getRedYellowGreen(group) {
+        return ""
+    }
+
+    function getCycleTimeMedian(group) {
+        return 0;
+    }
+
+    function getCycleTimeTrend(group) {
+        return "";
+    }
+
+    function getThroughputMedian(group) {
+        return 0;
+    }
+
+    function getThroughputTrend(group) {
+        return ""
+    }
+
+    function getWipRatio(group) {
+        return 0.0
+    }
+
 
     /***
      * Public methods
@@ -497,7 +538,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 },
                 {
                     text: 'RYG',
-                    dataIndex: 'RedYelloGreen'
+                    dataIndex: 'RedYellowGreen'
                 },
                 {
                     text: 'Cycle Time (Median)',

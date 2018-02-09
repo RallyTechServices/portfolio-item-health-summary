@@ -63,7 +63,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 },
                 {
                     text: 'RYG',
-                    dataIndex: 'RedYelloGreen'
+                    dataIndex: 'RedYellowGreen'
                 },
                 {
                     text: 'Cycle Time (Median)',
