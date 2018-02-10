@@ -6,7 +6,7 @@ Ext.define('com.ca.TechnicalServices.SummaryRow', {
         { name: 'Name', type: 'string' },
         { name: 'PercentCompleteByStoryPoints', type: 'int' },
         { name: 'PercentCompleteByStoryCount', type: 'int' },
-        { name: 'RedYelloGreen', type: 'string' },
+        { name: 'RedYellowGreen', type: 'string' },
         { name: 'CycleTimeMedian', type: 'int' },
         { name: 'CycleTimeTrend', type: 'string' },
         { name: 'ThroughputMedian', type: 'int' },
