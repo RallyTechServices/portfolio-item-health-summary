@@ -7,13 +7,13 @@
             0.0.1
     </title>
     <!--  (c) 2017 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Thu Feb 08 2018 23:59:53 GMT+0000 (UTC) -->
+    <!--  Build Date: Sat Feb 10 2018 00:04:08 GMT+0000 (UTC) -->
 
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Thu Feb 08 2018 23:59:53 GMT+0000 (UTC)";
+        var APP_BUILD_DATE = "Sat Feb 10 2018 00:04:08 GMT+0000 (UTC)";
         var ARTIFACT = "";
         var BUILDER = "ec2-user";
-        var CHECKSUM = "5944288195";
+        var CHECKSUM = "8461630105";
     </script>
 
     <script type="text/javascript" src="https://us1.rallydev.com/apps/2.1/sdk-debug.js"></script>
@@ -400,35 +400,98 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
     }
 
     function getPercentCompleteByStoryPoints(group) {
-        return 0;
+        var totals = _.reduce(group.children, function(accumulator, value) {
+            accumulator.acceptedLeafStoryPlanEstimateTotal += value.get('AcceptedLeafStoryPlanEstimateTotal') || 0;
+            accumulator.leafStoryPlanEstimateTotal += value.get('LeafStoryPlanEstimateTotal') || 0;
+            return accumulator;
+        }, {
+            acceptedLeafStoryPlanEstimateTotal: 0,
+            leafStoryPlanEstimateTotal: 0
+        });
+        return totals.acceptedLeafStoryPlanEstimateTotal / (totals.leafStoryPlanEstimateTotal || 1) * 100;
     }
 
     function getPercentCompleteByStoryCount(group) {
-        return 0;
+        var totals = _.reduce(group.children, function(accumulator, value) {
+            accumulator.acceptedLeafStoryCount += value.get('AcceptedLeafStoryCount') || 0;
+            accumulator.leafStoryCount += value.get('LeafStoryCount') || 0;
+            return accumulator;
+        }, {
+            acceptedLeafStoryCount: 0,
+            leafStoryCount: 0
+        });
+        return totals.acceptedLeafStoryCount / (totals.leafStoryCount || 1) * 100;
     }
 
     function getRedYellowGreen(group) {
-        return ""
+        // TODO (tj) See https://help.rallydev.com/track-portfolio-items#coloralg
+        return "TODO"
     }
 
     function getCycleTimeMedian(group) {
-        return 0;
+        var totals = _.reduce(group.children, function(accumulator, value) {
+            var actualStartDate = value.get('ActualStartDate');
+            var actualEndDate = value.get('ActualEndDate');
+            if (actualStartDate && actualEndDate) {
+                var days = getDaysElapsed(actualStartDate, actualEndDate);
+                accumulator.push(days);
+            }
+            return accumulator;
+        }, []);
+        return getMedian(totals);
+    }
+
+    function getMedian(values) {
+        var sorted = Ext.Array.sort(values);
+        var count = sorted.length;
+        var result = undefined;
+        if (count > 0) {
+            if ((count % 2) == 0) {
+                // Even number of items, return the average of the middle two values
+                result = (sorted[count / 2 - 1] + sorted[count / 2]) / 2;
+            }
+            else {
+                result = sorted[Math.floor(count / 2)];
+            }
+        }
+
+        return Math.ceil(result); // round up to whole days
+    }
+
+    function getDaysElapsed(startDateStr, endDateStr) {
+        var startDate = Ext.Date.parse(startDateStr, 'c', true);
+        var endDate = Ext.Date.parse(endDateStr, 'c', true);
+
+        // TODO (tj) Assuming doesn't take 1 year or more to complete
+        var result = undefined;
+        var startDay = Ext.Date.getDayOfYear(startDate);
+        var endDay = Ext.Date.getDayOfYear(endDate);
+        if (endDay >= startDay) {
+            // The simple case, completed in the same year
+            result = endDay - startDay;
+        }
+        else {
+            // Crossed a year boundary
+            var daysInStartYear = Ext.Date.isLeapYear(startDate) ? 365 : 364;
+            result = endDay + daysInStartYear - startDay;
+        }
+        return result;
     }
 
     function getCycleTimeTrend(group) {
-        return "";
+        return "TODO";
     }
 
     function getThroughputMedian(group) {
-        return 0;
+        return -1;
     }
 
     function getThroughputTrend(group) {
-        return ""
+        return "TODO";
     }
 
     function getWipRatio(group) {
-        return 0.0
+        return -1;
     }
 
 
@@ -446,7 +509,15 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             fetch: [
                 'FormattedID',
                 'Name',
-                'Parent'
+                'Parent',
+                'LeafStoryCount',
+                'AcceptedLeafStoryCount',
+                'LeafStoryPlanEstimateTotal',
+                'AcceptedLeafStoryPlanEstimateTotal',
+                'PercentCompleteByStoryCount',
+                'PercentCompleteByStoryPlanEstimate',
+                'ActualStartDate',
+                'ActualEndDate',
             ],
             groupField: 'Parent',
             listeners: {
