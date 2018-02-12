@@ -9,7 +9,7 @@ Ext.define('com.ca.TechnicalServices.SummaryRow', {
         { name: 'RedYellowGreen', type: 'string' },
         { name: 'CycleTimeMedian', type: 'int' },
         { name: 'CycleTimeTrend', type: 'string' },
-        { name: 'ThroughputMedian', type: 'int' },
+        { name: 'ThroughputMedian', type: 'float' },
         { name: 'ThroughputTrend', type: 'string' },
         { name: 'WipRatio', type: 'float' }
     ]

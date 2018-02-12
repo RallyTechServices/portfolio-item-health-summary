@@ -23,16 +23,6 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         this.stores = new com.ca.TechnicalServices.Stores();
         this.stores.init();
         this.down('#controlsArea').add({
-            xtype: 'rallyreleasecombobox',
-            fieldLabel: "Release",
-            listeners: {
-                scope: this,
-                change: function(control, newValue, oldValue) {
-                    this.stores.onReleaseChange(newValue);
-                }
-            }
-        });
-        this.down('#controlsArea').add({
             xtype: 'rallysearchcombobox',
             storeConfig: {
                 model: 'portfolioitem/initiative',
@@ -66,7 +56,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     dataIndex: 'RedYellowGreen'
                 },
                 {
-                    text: 'Cycle Time (Median)',
+                    text: 'Cycle Time (Median Days)',
                     dataIndex: 'CycleTimeMedian'
                 },
                 {
@@ -74,7 +64,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     dataIndex: 'CycleTimeTrend'
                 },
                 {
-                    text: 'Throughput (Median)',
+                    text: 'Throughput (Median Days)',
                     dataIndex: 'ThroughputMedian'
                 },
                 {
