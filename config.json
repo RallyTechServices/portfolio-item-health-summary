@@ -8,6 +8,7 @@
         "src/javascript/utils/__ts-info-link.js",
         "src/javascript/utils/__ts-logger.js",
         "src/javascript/utils/__ts-utilities.js",
+        "src/javascript/MetricsUtils.js",
         "src/javascript/SummaryRow.js",
         "src/javascript/Stores.js",
         "src/javascript/app.js"

@@ -7,13 +7,13 @@
             0.0.1
     </title>
     <!--  (c) 2017 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Sat Feb 10 2018 00:04:08 GMT+0000 (UTC) -->
+    <!--  Build Date: Mon Feb 12 2018 20:46:37 GMT+0000 (UTC) -->
 
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Sat Feb 10 2018 00:04:08 GMT+0000 (UTC)";
+        var APP_BUILD_DATE = "Mon Feb 12 2018 20:46:37 GMT+0000 (UTC)";
         var ARTIFACT = "";
         var BUILDER = "ec2-user";
-        var CHECKSUM = "8461630105";
+        var CHECKSUM = "9724501715";
     </script>
 
     <script type="text/javascript" src="https://us1.rallydev.com/apps/2.1/sdk-debug.js"></script>
@@ -329,120 +329,18 @@ Ext.define('TSUtilities', {
     }
 });
 
-/* global Ext */
-Ext.define('com.ca.TechnicalServices.SummaryRow', {
-    extend: 'Ext.data.Model',
-    fields: [
-        { name: 'FormattedID', type: 'string' },
-        { name: 'Name', type: 'string' },
-        { name: 'PercentCompleteByStoryPoints', type: 'int' },
-        { name: 'PercentCompleteByStoryCount', type: 'int' },
-        { name: 'RedYellowGreen', type: 'string' },
-        { name: 'CycleTimeMedian', type: 'int' },
-        { name: 'CycleTimeTrend', type: 'string' },
-        { name: 'ThroughputMedian', type: 'int' },
-        { name: 'ThroughputTrend', type: 'string' },
-        { name: 'WipRatio', type: 'float' }
-    ]
-});
-
-/* global Ext _ com */
-Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
-    var selectedRelease;
-    var selectedPortfolioItem;
-
+/* global Ext _ */
+Ext.define('tsMetricsUtils', function(MetricsUtils) {
     return {
         statics: {
-            PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Feature',
-            PORTFOLIO_ITEM_STORE_ID: 'PORTFOLIO_ITEM_STORE_ID',
-            GRID_STORE_ID: 'GRID_STORE_ID',
-        },
-        init: init,
-        onReleaseChange: onReleaseChange,
-        onPortfolioItemChange: onPortfolioItemChange
-    }
-
-    /***
-     * Private methods
-     ***/
-    function loadPortfolioItemStore() {
-        if (selectedRelease && selectedPortfolioItem) {
-            Ext.data.StoreManager.lookup(Stores.PORTFOLIO_ITEM_STORE_ID).load({
-                filters: [{
-                        property: 'Parent.Parent',
-                        value: selectedPortfolioItem
-                    },
-                    {
-                        property: 'Release',
-                        value: selectedRelease
-                    }
-                ]
-            });
+            getMedian: getMedian,
+            getDaysElapsed: getDaysElapsed,
+            //toPercentString: toPercentString
         }
     }
 
-    function onPortfolioItemStoreLoad(store, records, successful) {
-        var data = _.map(store.getGroups(), function(group) {
-            return Ext.create('com.ca.TechnicalServices.SummaryRow', {
-                FormattedID: group.name.FormattedID,
-                Name: group.name.Name,
-                PercentCompleteByStoryPoints: getPercentCompleteByStoryPoints(group),
-                PercentCompleteByStoryCount: getPercentCompleteByStoryCount(group),
-                RedYellowGreen: getRedYellowGreen(group),
-                CycleTimeMedian: getCycleTimeMedian(group),
-                CycleTimeTrend: getCycleTimeTrend(group),
-                ThroughputMedian: getThroughputMedian(group),
-                ThroughputTrend: getThroughputTrend(group),
-                WipRatio: getWipRatio(group)
-            });
-        });
-        Ext.data.StoreManager.lookup(Stores.GRID_STORE_ID).loadData(data);
-    }
-
-    function getPercentCompleteByStoryPoints(group) {
-        var totals = _.reduce(group.children, function(accumulator, value) {
-            accumulator.acceptedLeafStoryPlanEstimateTotal += value.get('AcceptedLeafStoryPlanEstimateTotal') || 0;
-            accumulator.leafStoryPlanEstimateTotal += value.get('LeafStoryPlanEstimateTotal') || 0;
-            return accumulator;
-        }, {
-            acceptedLeafStoryPlanEstimateTotal: 0,
-            leafStoryPlanEstimateTotal: 0
-        });
-        return totals.acceptedLeafStoryPlanEstimateTotal / (totals.leafStoryPlanEstimateTotal || 1) * 100;
-    }
-
-    function getPercentCompleteByStoryCount(group) {
-        var totals = _.reduce(group.children, function(accumulator, value) {
-            accumulator.acceptedLeafStoryCount += value.get('AcceptedLeafStoryCount') || 0;
-            accumulator.leafStoryCount += value.get('LeafStoryCount') || 0;
-            return accumulator;
-        }, {
-            acceptedLeafStoryCount: 0,
-            leafStoryCount: 0
-        });
-        return totals.acceptedLeafStoryCount / (totals.leafStoryCount || 1) * 100;
-    }
-
-    function getRedYellowGreen(group) {
-        // TODO (tj) See https://help.rallydev.com/track-portfolio-items#coloralg
-        return "TODO"
-    }
-
-    function getCycleTimeMedian(group) {
-        var totals = _.reduce(group.children, function(accumulator, value) {
-            var actualStartDate = value.get('ActualStartDate');
-            var actualEndDate = value.get('ActualEndDate');
-            if (actualStartDate && actualEndDate) {
-                var days = getDaysElapsed(actualStartDate, actualEndDate);
-                accumulator.push(days);
-            }
-            return accumulator;
-        }, []);
-        return getMedian(totals);
-    }
-
     function getMedian(values) {
-        var sorted = Ext.Array.sort(values);
+        var sorted = _.unique(_.sortBy(values));
         var count = sorted.length;
         var result = undefined;
         if (count > 0) {
@@ -477,23 +375,159 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
         }
         return result;
     }
+    /*
+    function toPercentString(value) {
+        if (isNaN(value)) {
+            value = "Unknown"
+        }
+        else {
+            value = ((value - 1) * 100).toFixed(0)
+        }
 
-    function getCycleTimeTrend(group) {
-        return "TODO";
+        if (value > 0) {
+            value = "+" + value;
+        }
+
+        return value + "%"
+    }
+    */
+});
+
+/* global Ext */
+Ext.define('com.ca.TechnicalServices.SummaryRow', {
+    extend: 'Ext.data.Model',
+    fields: [
+        { name: 'FormattedID', type: 'string' },
+        { name: 'Name', type: 'string' },
+        { name: 'PercentCompleteByStoryPoints', type: 'int' },
+        { name: 'PercentCompleteByStoryCount', type: 'int' },
+        { name: 'RedYellowGreen', type: 'string' },
+        { name: 'CycleTimeMedian', type: 'int' },
+        { name: 'CycleTimeTrend', type: 'string' },
+        { name: 'ThroughputMedian', type: 'float' },
+        { name: 'ThroughputTrend', type: 'string' },
+        { name: 'WipRatio', type: 'float' }
+    ]
+});
+
+/* global Ext _ com tsMetricsUtils */
+Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
+    var selectedPortfolioItem;
+
+    return {
+        require: [
+            'tsMetricsUtils'
+        ],
+        statics: {
+            PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Feature',
+            PORTFOLIO_ITEM_STORE_ID: 'PORTFOLIO_ITEM_STORE_ID',
+            GRID_STORE_ID: 'GRID_STORE_ID',
+            PER_PROJECT_WIP_LIMIT: 3,
+            CYCLE_TIME_TREND_DAYS: 30
+        },
+        init: init,
+        onPortfolioItemChange: onPortfolioItemChange
     }
 
-    function getThroughputMedian(group) {
-        return -1;
+    /***
+     * Private methods
+     ***/
+    function loadPortfolioItemStore() {
+        if (selectedPortfolioItem) {
+            Ext.data.StoreManager.lookup(Stores.PORTFOLIO_ITEM_STORE_ID).load({
+                filters: [{
+                    property: 'Parent.Parent',
+                    value: selectedPortfolioItem
+                }]
+            });
+        }
     }
 
-    function getThroughputTrend(group) {
-        return "TODO";
+    function onPortfolioItemStoreLoad(store, records, successful) {
+        var data = _.map(store.getGroups(), function(group) {
+            var metrics = reduceGroup(group);
+            var allCycleTimesMedianDays = tsMetricsUtils.getMedian(metrics.allCycleTimes);
+            var priorPeriodCycleTimesMedianDays = tsMetricsUtils.getMedian(metrics.priorPeriodCycleTimes);
+            var currentPeriodCycleTimesMedianDays = tsMetricsUtils.getMedian(metrics.currentPeriodCycleTimes);
+            var cycleTimesTrend = (currentPeriodCycleTimesMedianDays - priorPeriodCycleTimesMedianDays).toFixed(0);
+            var throughputTrend = (1 / currentPeriodCycleTimesMedianDays - 1 / priorPeriodCycleTimesMedianDays).toFixed(4);
+
+            var uniqueProjectCount = _.unique(metrics.projects, '_ref').length;
+
+            return Ext.create('com.ca.TechnicalServices.SummaryRow', {
+                FormattedID: group.name.FormattedID,
+                Name: group.name.Name,
+                PercentCompleteByStoryPoints: metrics.acceptedLeafStoryPlanEstimateTotal / (metrics.leafStoryPlanEstimateTotal || 1) * 100,
+                PercentCompleteByStoryCount: metrics.acceptedLeafStoryCount / (metrics.leafStoryCount || 1) * 100,
+                RedYellowGreen: getRedYellowGreen(group),
+                CycleTimeMedian: allCycleTimesMedianDays,
+                CycleTimeTrend: cycleTimesTrend,
+                ThroughputMedian: (1 / allCycleTimesMedianDays).toFixed(4),
+                ThroughputTrend: throughputTrend,
+                WipRatio: (metrics.workInProgress / (uniqueProjectCount * Stores.PER_PROJECT_WIP_LIMIT)).toFixed(2)
+            });
+        });
+        Ext.data.StoreManager.lookup(Stores.GRID_STORE_ID).loadData(data);
     }
 
-    function getWipRatio(group) {
-        return -1;
+    function reduceGroup(group) {
+        var today = new Date();
+        var priorPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, Stores.CYCLE_TIME_TREND_DAYS * 2);
+        var currentPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, Stores.CYCLE_TIME_TREND_DAYS);
+        var priorPeriodEnd = Ext.Date.subtract(currentPeriodStart, Ext.Date.DAY, 1);
+        var currentPeriodEnd = Ext.Date.subtract(today, Ext.Date.DAY, 1);
+        var result = _.reduce(group.children, function(accumulator, value) {
+
+            // Percent complete by story points
+            accumulator.acceptedLeafStoryPlanEstimateTotal += value.get('AcceptedLeafStoryPlanEstimateTotal') || 0;
+            accumulator.leafStoryPlanEstimateTotal += value.get('LeafStoryPlanEstimateTotal') || 0;
+
+            // Percent complete by story count
+            accumulator.acceptedLeafStoryCount += value.get('AcceptedLeafStoryCount') || 0;
+            accumulator.leafStoryCount += value.get('LeafStoryCount') || 0;
+
+            // Cycle time and trends
+            var actualStartDate = value.get('ActualStartDate');
+            var actualEndDate = value.get('ActualEndDate');
+            if (actualStartDate && actualEndDate) {
+                var days = tsMetricsUtils.getDaysElapsed(actualStartDate, actualEndDate);
+                accumulator.allCycleTimes.push(days);
+
+                if (Ext.Date.between(actualEndDate, priorPeriodStart, priorPeriodEnd)) {
+                    accumulator.priorPeriodCycleTimes.push(days);
+                }
+                else if (Ext.Date.between(actualEndDate, currentPeriodStart, currentPeriodEnd)) {
+                    accumulator.currentPeriodCycleTimes.push(days);
+                }
+            }
+
+            // WIP
+            if (actualStartDate && !actualEndDate) {
+                accumulator.workInProgress++;
+            }
+
+            accumulator.projects.push(value.get('Project'))
+
+            return accumulator;
+        }, {
+            acceptedLeafStoryPlanEstimateTotal: 0,
+            leafStoryPlanEstimateTotal: 0,
+            acceptedLeafStoryCount: 0,
+            leafStoryCount: 0,
+            allCycleTimes: [],
+            priorPeriodCycleTimes: [],
+            currentPeriodCycleTimes: [],
+            workInProgress: 0,
+            projects: [],
+        });
+        return result;
     }
 
+
+    function getRedYellowGreen(group) {
+        // TODO (tj) See https://help.rallydev.com/track-portfolio-items#coloralg
+        return "TODO"
+    }
 
     /***
      * Public methods
@@ -518,6 +552,7 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
                 'PercentCompleteByStoryPlanEstimate',
                 'ActualStartDate',
                 'ActualEndDate',
+                'Project'
             ],
             groupField: 'Parent',
             listeners: {
@@ -531,11 +566,6 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             storeId: Stores.GRID_STORE_ID,
             model: 'com.ca.TechnicalServices.SummaryRow'
         });
-    }
-
-    function onReleaseChange(newValue) {
-        selectedRelease = newValue;
-        loadPortfolioItemStore();
     }
 
     function onPortfolioItemChange(newValue) {
@@ -568,16 +598,6 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         this.logger.setSaveForLater(this.getSetting('saveLog'));
         this.stores = new com.ca.TechnicalServices.Stores();
         this.stores.init();
-        this.down('#controlsArea').add({
-            xtype: 'rallyreleasecombobox',
-            fieldLabel: "Release",
-            listeners: {
-                scope: this,
-                change: function(control, newValue, oldValue) {
-                    this.stores.onReleaseChange(newValue);
-                }
-            }
-        });
         this.down('#controlsArea').add({
             xtype: 'rallysearchcombobox',
             storeConfig: {
@@ -612,7 +632,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     dataIndex: 'RedYellowGreen'
                 },
                 {
-                    text: 'Cycle Time (Median)',
+                    text: 'Cycle Time (Median Days)',
                     dataIndex: 'CycleTimeMedian'
                 },
                 {
@@ -620,7 +640,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     dataIndex: 'CycleTimeTrend'
                 },
                 {
-                    text: 'Throughput (Median)',
+                    text: 'Throughput (Median Days)',
                     dataIndex: 'ThroughputMedian'
                 },
                 {

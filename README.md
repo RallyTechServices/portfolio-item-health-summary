@@ -5,8 +5,10 @@
 ![screenshot](./images/screenshot.png "This is an example")
 
 ## Open Questions
-* Desired name?
-* floats or ints for medians and WIP ratio?
+* Desired name? - "Delivery Health"
+   * How well are you executing on yoru plan (from point of view of value being delivered)
+* Sure you want median?
+   * [61,93,104,112,138]
 
 ## Development Notes
 
