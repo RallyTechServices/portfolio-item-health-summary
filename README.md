@@ -9,6 +9,9 @@
    * How well are you executing on yoru plan (from point of view of value being delivered)
 * Sure you want median?
    * [61,93,104,112,138]
+* Note that data from mgmt projects is excluded from ALL metrics. For example "% Done by Story Count" only
+* counts features from dev projects...and does not use the rolled up data available on the Initiative/Epic
+* since that contains data from features from all projects.
 
 ## Development Notes
 

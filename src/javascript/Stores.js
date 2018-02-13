@@ -1,9 +1,8 @@
-/* global Ext _ com tsMetricsUtils Rally */
+/* global Ext Deft _ com tsMetricsUtils Rally */
 // TODO (tj) make level configurable
 // TODO (tj) if at theme level are metric still a Feature Level?
 Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
     var selectedPortfolioItem;
-    var parentNameMap = {};
     return {
         require: [
             'tsMetricsUtils'
@@ -25,6 +24,7 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
     /***
      * Private methods
      ***/
+    /*
     function loadPortfolioItemStore() {
         if (selectedPortfolioItem) {
 
@@ -59,64 +59,49 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             });
         }
     }
+    */
 
-    //function onPortfolioItemStoreLoad(store, records, successful) {
-    function onPortfolioItemStoreLoad(store) {
+    function onGroupsLoaded(featureGroups) {
 
-        // Store contains mix of Epics and Features, grouped by parent.
-        // Build a map of Epic ObjectId to Name and filter it out of the
-        // metric data.
+        var data = _.map(featureGroups, function(group) {
 
-        var metricsGroups = _.filter(store.getGroups(), function(group) {
-            var result = false; // By default, don't include a group
-            if (group.children && group.children.length) {
-                var typeName = group.children[0].get("PortfolioItemTypeName");
-                if (typeName == Stores.ROW_PORTFOLIO_ITEM_TYPE) {
-                    _.forEach(group.children, function(item) {
-                        parentNameMap[item.get('ObjectID')] = item.get('Name');
-                    });
-                }
-                if (typeName == Stores.ROW_METRICS_PORTFOLIO_ITEM_TYPE) {
-                    result = true;
-                }
-            }
+            var portfolioItem = group.get("PortfolioItem");
 
-            return result;
-        });
+            var metrics = getMetrics(group);
 
-        var data = _.map(metricsGroups, function(group) {
-            var metrics = reduceGroup(group);
+            // Cycle times
             var allCycleTimesMedianDays = tsMetricsUtils.getMedian(metrics.allCycleTimes);
             var priorPeriodCycleTimesMedianDays = tsMetricsUtils.getMedian(metrics.priorPeriodCycleTimes);
             var currentPeriodCycleTimesMedianDays = tsMetricsUtils.getMedian(metrics.currentPeriodCycleTimes);
             var cycleTimesTrend = (currentPeriodCycleTimesMedianDays - priorPeriodCycleTimesMedianDays).toFixed(0);
-            var throughputTrend = (1 / currentPeriodCycleTimesMedianDays - 1 / priorPeriodCycleTimesMedianDays).toFixed(4);
 
+            // WIP Ratio
             var uniqueProjectCount = _.unique(metrics.projects, '_ref').length;
 
             return Ext.create('com.ca.TechnicalServices.SummaryRow', {
-                FormattedID: group.name.FormattedID,
-                Name: parentNameMap[group.name],
+                FormattedID: portfolioItem.get('FormattedID'),
+                Name: portfolioItem.get('Name'),
                 PercentCompleteByStoryPoints: metrics.acceptedLeafStoryPlanEstimateTotal / (metrics.leafStoryPlanEstimateTotal || 1) * 100,
                 PercentCompleteByStoryCount: metrics.acceptedLeafStoryCount / (metrics.leafStoryCount || 1) * 100,
                 RedYellowGreen: getRedYellowGreen(group),
                 CycleTimeMedian: allCycleTimesMedianDays,
+                CycleTimeCurrentPeriod: currentPeriodCycleTimesMedianDays,
                 CycleTimeTrend: cycleTimesTrend,
-                ThroughputMedian: (1 / allCycleTimesMedianDays).toFixed(4),
-                ThroughputTrend: throughputTrend,
+                ThroughputMedian: metrics.currentPeriodThroughput,
+                ThroughputTrend: metrics.currentPeriodThroughput - metrics.priorPeriodThroughput,
                 WipRatio: (metrics.workInProgress / (uniqueProjectCount * Stores.PER_PROJECT_WIP_LIMIT)).toFixed(2)
             });
         });
         Ext.data.StoreManager.lookup(Stores.GRID_STORE_ID).loadData(data);
     }
 
-    function reduceGroup(group) {
+    function getMetrics(group) {
         var today = new Date();
         var priorPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, Stores.CYCLE_TIME_TREND_DAYS * 2);
         var currentPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, Stores.CYCLE_TIME_TREND_DAYS);
         var priorPeriodEnd = Ext.Date.subtract(currentPeriodStart, Ext.Date.DAY, 1);
         var currentPeriodEnd = Ext.Date.subtract(today, Ext.Date.DAY, 1);
-        var result = _.reduce(group.children, function(accumulator, value) {
+        var result = _.reduce(group.get("Features"), function(accumulator, value) {
 
             // Percent complete by story points
             accumulator.acceptedLeafStoryPlanEstimateTotal += value.get('AcceptedLeafStoryPlanEstimateTotal') || 0;
@@ -136,9 +121,11 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
 
                 if (Ext.Date.between(actualEndDate, priorPeriodStart, priorPeriodEnd)) {
                     accumulator.priorPeriodCycleTimes.push(days);
+                    accumulator.priorPeriodThroughput++;
                 }
                 else if (Ext.Date.between(actualEndDate, currentPeriodStart, currentPeriodEnd)) {
                     accumulator.currentPeriodCycleTimes.push(days);
+                    accumulator.currentPeriodThroughput++;
                 }
             }
 
@@ -158,6 +145,8 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             allCycleTimes: [],
             priorPeriodCycleTimes: [],
             currentPeriodCycleTimes: [],
+            priorPeriodThroughput: 0,
+            currentPeriodThroughput: 0,
             workInProgress: 0,
             projects: [],
         });
@@ -174,34 +163,6 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
      * Public methods
      ***/
     function init() {
-        // Store to load Feature item data
-        Ext.create('Rally.data.wsapi.Store', {
-            storeId: Stores.PORTFOLIO_ITEM_STORE_ID,
-            model: Stores.PORTFOLIO_ITEM_TYPE,
-            listeners: {
-                scope: this
-            },
-            fetch: [
-                'FormattedID',
-                'Name',
-                'Parent',
-                'LeafStoryCount',
-                'AcceptedLeafStoryCount',
-                'LeafStoryPlanEstimateTotal',
-                'AcceptedLeafStoryPlanEstimateTotal',
-                'PercentCompleteByStoryCount',
-                'PercentCompleteByStoryPlanEstimate',
-                'ActualStartDate',
-                'ActualEndDate',
-                'Project'
-            ],
-            groupField: 'Parent',
-            listeners: {
-                scope: this,
-                load: onPortfolioItemStoreLoad
-            }
-        });
-
         // Store to contain row data computed from portfolio items
         Ext.create('Rally.data.custom.Store', {
             storeId: Stores.GRID_STORE_ID,
@@ -211,11 +172,22 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
 
     function onPortfolioItemChange(newValue) {
         selectedPortfolioItem = newValue;
-        return getFeaturesFromPis([selectedPortfolioItem]).then(onPortfolioItemStoreLoad)
-        //loadPortfolioItemStore();
+        return getDescendentsFromPis([selectedPortfolioItem], [Stores.ROW_PORTFOLIO_ITEM_TYPE])
+            .then(function(rows) {
+                var promises = _.map(rows, function(row) {
+                    return getDescendentsFromPis([row], [Stores.ROW_METRICS_PORTFOLIO_ITEM_TYPE])
+                        .then(function(features) {
+                            return Ext.create('com.ca.TechnicalServices.FeatureGroup', {
+                                PortfolioItem: row,
+                                Features: features
+                            });
+                        });
+                });
+                return Deft.promise.Promise.all(promises).then(onGroupsLoaded)
+            });
     }
 
-    function getFeaturesFromPis(portfolioItems) {
+    function getDescendentsFromPis(portfolioItems, descendentTypes) {
         var deferred = Ext.create('Deft.Deferred');
         var portfolioOids = _.map(portfolioItems, function(item) {
             return item.get('ObjectID');
@@ -230,7 +202,7 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             var filters = [{
                     property: '_TypeHierarchy',
                     operator: 'in',
-                    value: [Stores.ROW_PORTFOLIO_ITEM_TYPE, Stores.ROW_METRICS_PORTFOLIO_ITEM_TYPE]
+                    value: descendentTypes
                 },
                 {
                     property: '__At',
@@ -241,6 +213,7 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
                     operator: 'in',
                     value: portfolioOids
                 }
+                // TODO (tj) Filter "mgmt" projects
             ];
 
             Ext.create('Rally.data.lookback.SnapshotStore', {
@@ -250,7 +223,6 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
                 fetch: [
                     'FormattedID',
                     'Name',
-                    'Parent',
                     'LeafStoryCount',
                     'AcceptedLeafStoryCount',
                     'LeafStoryPlanEstimateTotal',
@@ -263,14 +235,13 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
                     'PortfolioItemType',
                     'PortfolioItemTypeName'
                 ],
-                groupField: 'Parent',
                 listeners: {
                     load: function(store, data, success) {
-                        if (!success || data.length < 1) {
-                            deferred.reject("Unable to load feature IDs " + portfolioOids);
+                        if (!success) {
+                            deferred.reject("Unable to load PortfolioItem IDs " + portfolioOids);
                         }
                         else {
-                            deferred.resolve(store);
+                            deferred.resolve(data);
                         }
                     }
                 }

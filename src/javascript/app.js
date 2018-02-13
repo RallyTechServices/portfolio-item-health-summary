@@ -44,11 +44,11 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     dataIndex: 'Name',
                 },
                 {
-                    text: '% Complete (Points)',
+                    text: '% Complete by Story Points',
                     dataIndex: 'PercentCompleteByStoryPoints'
                 },
                 {
-                    text: '% Complete (Count)',
+                    text: '% Complete by Story Count',
                     dataIndex: 'PercentCompleteByStoryCount'
                 },
                 {
@@ -56,19 +56,23 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     dataIndex: 'RedYellowGreen'
                 },
                 {
-                    text: 'Cycle Time (Median Days)',
+                    text: 'Cycle Time - Overall Median (Days)',
                     dataIndex: 'CycleTimeMedian'
                 },
                 {
-                    text: 'Cycle Time (Trend)',
+                    text: 'Cycle Time - Last 30 Days',
+                    dataIndex: 'CycleTimeCurrentPeriod'
+                },
+                {
+                    text: 'Cycle Time - 30 Day Trend',
                     dataIndex: 'CycleTimeTrend'
                 },
                 {
-                    text: 'Throughput (Median Days)',
+                    text: 'Throughput - Last 30 Days',
                     dataIndex: 'ThroughputMedian'
                 },
                 {
-                    text: 'Throughput (Trend)',
+                    text: 'Throughput - 30 Day Trend',
                     dataIndex: 'ThroughputTrend'
                 },
                 {
