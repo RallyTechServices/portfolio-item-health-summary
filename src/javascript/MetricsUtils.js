@@ -3,8 +3,7 @@ Ext.define('tsMetricsUtils', function(MetricsUtils) {
     return {
         statics: {
             getMedian: getMedian,
-            getDaysElapsed: getDaysElapsed,
-            getGroupPiType: getGroupPiType
+            getDaysElapsed: getDaysElapsed
             //toPercentString: toPercentString
         }
     }
@@ -46,13 +45,6 @@ Ext.define('tsMetricsUtils', function(MetricsUtils) {
         return result;
     }
 
-    function getGroupPiType(group) {
-        var result;
-        if (group.children && group.children.length) {
-            result = group.children[0].get("PortfolioItemType");
-        }
-        return result;
-    }
     /*
     function toPercentString(value) {
         if (isNaN(value)) {

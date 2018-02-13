@@ -14,7 +14,9 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             GRID_STORE_ID: 'GRID_STORE_ID',
             PER_PROJECT_WIP_LIMIT: 3,
             CYCLE_TIME_TREND_DAYS: 30,
-            MGMT_PROJECT_NAMES_SETTING: 'MGMT_PROJECT_NAMES_SETTING'
+            MGMT_PROJECT_NAMES_SETTING: 'MGMT_PROJECT_NAMES_SETTING',
+            ROW_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Epic',
+            ROW_METRICS_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Feature',
         },
         init: init,
         onPortfolioItemChange: onPortfolioItemChange
@@ -66,14 +68,20 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
         // metric data.
 
         var metricsGroups = _.filter(store.getGroups(), function(group) {
-            if (tsMetricsUtils.getGroupPiType(group) == "PortfolioItem/Epic") {
-                _.forEach(group.children, function(item) {
-                    parentNameMap[item.get('ObjectID')] = item.get('Name');
-                });
+            var result = false; // By default, don't include a group
+            if (group.children && group.children.length) {
+                var typeName = group.children[0].get("PortfolioItemTypeName");
+                if (typeName == Stores.ROW_PORTFOLIO_ITEM_TYPE) {
+                    _.forEach(group.children, function(item) {
+                        parentNameMap[item.get('ObjectID')] = item.get('Name');
+                    });
+                }
+                if (typeName == Stores.ROW_METRICS_PORTFOLIO_ITEM_TYPE) {
+                    result = true;
+                }
             }
-            if (tsMetricsUtils.getGroupPiType(group) == "PortfolioItem/Feature") {
-                return true;
-            }
+
+            return result;
         });
 
         var data = _.map(metricsGroups, function(group) {
@@ -222,7 +230,7 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             var filters = [{
                     property: '_TypeHierarchy',
                     operator: 'in',
-                    value: ['PortfolioItem/Epic', 'PortfolioItem/Feature']
+                    value: [Stores.ROW_PORTFOLIO_ITEM_TYPE, Stores.ROW_METRICS_PORTFOLIO_ITEM_TYPE]
                 },
                 {
                     property: '__At',
@@ -252,7 +260,8 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
                     'ActualStartDate',
                     'ActualEndDate',
                     'Project',
-                    'PortfolioItemType'
+                    'PortfolioItemType',
+                    'PortfolioItemTypeName'
                 ],
                 groupField: 'Parent',
                 listeners: {

@@ -7,13 +7,13 @@
             0.0.1
     </title>
     <!--  (c) 2017 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Tue Feb 13 2018 17:03:32 GMT+0000 (UTC) -->
+    <!--  Build Date: Tue Feb 13 2018 18:24:09 GMT+0000 (UTC) -->
 
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Feb 13 2018 17:03:32 GMT+0000 (UTC)";
+        var APP_BUILD_DATE = "Tue Feb 13 2018 18:24:09 GMT+0000 (UTC)";
         var ARTIFACT = "";
         var BUILDER = "ec2-user";
-        var CHECKSUM = "13705524186";
+        var CHECKSUM = "13846855858";
     </script>
 
     <script type="text/javascript" src="https://us1.rallydev.com/apps/2.1/sdk-debug.js"></script>
@@ -334,8 +334,7 @@ Ext.define('tsMetricsUtils', function(MetricsUtils) {
     return {
         statics: {
             getMedian: getMedian,
-            getDaysElapsed: getDaysElapsed,
-            getGroupPiType: getGroupPiType
+            getDaysElapsed: getDaysElapsed
             //toPercentString: toPercentString
         }
     }
@@ -377,13 +376,6 @@ Ext.define('tsMetricsUtils', function(MetricsUtils) {
         return result;
     }
 
-    function getGroupPiType(group) {
-        var result;
-        if (group.children && group.children.length) {
-            result = group.children[0].get("PortfolioItemType");
-        }
-        return result;
-    }
     /*
     function toPercentString(value) {
         if (isNaN(value)) {
@@ -435,7 +427,9 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             GRID_STORE_ID: 'GRID_STORE_ID',
             PER_PROJECT_WIP_LIMIT: 3,
             CYCLE_TIME_TREND_DAYS: 30,
-            MGMT_PROJECT_NAMES_SETTING: 'MGMT_PROJECT_NAMES_SETTING'
+            MGMT_PROJECT_NAMES_SETTING: 'MGMT_PROJECT_NAMES_SETTING',
+            ROW_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Epic',
+            ROW_METRICS_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Feature',
         },
         init: init,
         onPortfolioItemChange: onPortfolioItemChange
@@ -487,14 +481,20 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
         // metric data.
 
         var metricsGroups = _.filter(store.getGroups(), function(group) {
-            if (tsMetricsUtils.getGroupPiType(group) == "PortfolioItem/Epic") {
-                _.forEach(group.children, function(item) {
-                    parentNameMap[item.get('ObjectID')] = item.get('Name');
-                });
+            var result = false; // By default, don't include a group
+            if (group.children && group.children.length) {
+                var typeName = group.children[0].get("PortfolioItemTypeName");
+                if (typeName == Stores.ROW_PORTFOLIO_ITEM_TYPE) {
+                    _.forEach(group.children, function(item) {
+                        parentNameMap[item.get('ObjectID')] = item.get('Name');
+                    });
+                }
+                if (typeName == Stores.ROW_METRICS_PORTFOLIO_ITEM_TYPE) {
+                    result = true;
+                }
             }
-            if (tsMetricsUtils.getGroupPiType(group) == "PortfolioItem/Feature") {
-                return true;
-            }
+
+            return result;
         });
 
         var data = _.map(metricsGroups, function(group) {
@@ -643,7 +643,7 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             var filters = [{
                     property: '_TypeHierarchy',
                     operator: 'in',
-                    value: ['PortfolioItem/Epic', 'PortfolioItem/Feature']
+                    value: [Stores.ROW_PORTFOLIO_ITEM_TYPE, Stores.ROW_METRICS_PORTFOLIO_ITEM_TYPE]
                 },
                 {
                     property: '__At',
@@ -673,7 +673,8 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
                     'ActualStartDate',
                     'ActualEndDate',
                     'Project',
-                    'PortfolioItemType'
+                    'PortfolioItemType',
+                    'PortfolioItemTypeName'
                 ],
                 groupField: 'Parent',
                 listeners: {
