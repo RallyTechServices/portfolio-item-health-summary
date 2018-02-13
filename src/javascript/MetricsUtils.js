@@ -3,7 +3,7 @@ Ext.define('tsMetricsUtils', function(MetricsUtils) {
     return {
         statics: {
             getMedian: getMedian,
-            getDaysElapsed: getDaysElapsed,
+            getDaysElapsed: getDaysElapsed
             //toPercentString: toPercentString
         }
     }
@@ -44,6 +44,7 @@ Ext.define('tsMetricsUtils', function(MetricsUtils) {
         }
         return result;
     }
+
     /*
     function toPercentString(value) {
         if (isNaN(value)) {

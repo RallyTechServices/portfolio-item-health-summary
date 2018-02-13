@@ -32,7 +32,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             listeners: {
                 scope: this,
                 change: function(control, newValue) {
-                    this.stores.onPortfolioItemChange(newValue);
+                    this.stores.onPortfolioItemChange(control.getRecord());
                 }
             }
         });
@@ -44,11 +44,11 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     dataIndex: 'Name',
                 },
                 {
-                    text: '% Complete (Points)',
+                    text: '% Complete by Story Points',
                     dataIndex: 'PercentCompleteByStoryPoints'
                 },
                 {
-                    text: '% Complete (Count)',
+                    text: '% Complete by Story Count',
                     dataIndex: 'PercentCompleteByStoryCount'
                 },
                 {
@@ -56,19 +56,23 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     dataIndex: 'RedYellowGreen'
                 },
                 {
-                    text: 'Cycle Time (Median Days)',
+                    text: 'Cycle Time - Overall Median (Days)',
                     dataIndex: 'CycleTimeMedian'
                 },
                 {
-                    text: 'Cycle Time (Trend)',
+                    text: 'Cycle Time - Last 30 Days',
+                    dataIndex: 'CycleTimeCurrentPeriod'
+                },
+                {
+                    text: 'Cycle Time - 30 Day Trend',
                     dataIndex: 'CycleTimeTrend'
                 },
                 {
-                    text: 'Throughput (Median Days)',
+                    text: 'Throughput - Last 30 Days',
                     dataIndex: 'ThroughputMedian'
                 },
                 {
-                    text: 'Throughput (Trend)',
+                    text: 'Throughput - 30 Day Trend',
                     dataIndex: 'ThroughputTrend'
                 },
                 {
@@ -82,14 +86,20 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     getSettingsFields: function() {
         var check_box_margins = '5 0 5 0';
         return [{
-            name: 'saveLog',
-            xtype: 'rallycheckboxfield',
-            boxLabelAlign: 'after',
-            fieldLabel: '',
-            margin: check_box_margins,
-            boxLabel: 'Save Logging<br/><span style="color:#999999;"><i>Save last 100 lines of log for debugging.</i></span>'
+                name: 'saveLog',
+                xtype: 'rallycheckboxfield',
+                boxLabelAlign: 'after',
+                fieldLabel: '',
+                margin: check_box_margins,
+                boxLabel: 'Save Logging<br/><span style="color:#999999;"><i>Save last 100 lines of log for debugging.</i></span>'
 
-        }];
+            },
+            {
+                name: com.ca.TechnicalServices.Stores.MGMT_PROJECT_NAMES_SETTING,
+                xtype: 'textarea',
+                fieldLabel: 'Management Projects to Exclude',
+            }
+        ];
     },
 
     getOptions: function() {
