@@ -32,7 +32,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             listeners: {
                 scope: this,
                 change: function(control, newValue) {
-                    this.stores.onPortfolioItemChange(newValue);
+                    this.stores.onPortfolioItemChange(control.getRecord());
                 }
             }
         });
@@ -82,14 +82,20 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     getSettingsFields: function() {
         var check_box_margins = '5 0 5 0';
         return [{
-            name: 'saveLog',
-            xtype: 'rallycheckboxfield',
-            boxLabelAlign: 'after',
-            fieldLabel: '',
-            margin: check_box_margins,
-            boxLabel: 'Save Logging<br/><span style="color:#999999;"><i>Save last 100 lines of log for debugging.</i></span>'
+                name: 'saveLog',
+                xtype: 'rallycheckboxfield',
+                boxLabelAlign: 'after',
+                fieldLabel: '',
+                margin: check_box_margins,
+                boxLabel: 'Save Logging<br/><span style="color:#999999;"><i>Save last 100 lines of log for debugging.</i></span>'
 
-        }];
+            },
+            {
+                name: com.ca.TechnicalServices.Stores.MGMT_PROJECT_NAMES_SETTING,
+                xtype: 'textarea',
+                fieldLabel: 'Management Projects to Exclude',
+            }
+        ];
     },
 
     getOptions: function() {

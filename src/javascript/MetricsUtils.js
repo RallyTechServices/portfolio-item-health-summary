@@ -4,6 +4,7 @@ Ext.define('tsMetricsUtils', function(MetricsUtils) {
         statics: {
             getMedian: getMedian,
             getDaysElapsed: getDaysElapsed,
+            getGroupPiType: getGroupPiType
             //toPercentString: toPercentString
         }
     }
@@ -41,6 +42,14 @@ Ext.define('tsMetricsUtils', function(MetricsUtils) {
             // Crossed a year boundary
             var daysInStartYear = Ext.Date.isLeapYear(startDate) ? 365 : 364;
             result = endDay + daysInStartYear - startDay;
+        }
+        return result;
+    }
+
+    function getGroupPiType(group) {
+        var result;
+        if (group.children && group.children.length) {
+            result = group.children[0].get("PortfolioItemType");
         }
         return result;
     }

@@ -1,7 +1,9 @@
-/* global Ext _ com tsMetricsUtils */
+/* global Ext _ com tsMetricsUtils Rally */
+// TODO (tj) make level configurable
+// TODO (tj) if at theme level are metric still a Feature Level?
 Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
     var selectedPortfolioItem;
-
+    var parentNameMap = {};
     return {
         require: [
             'tsMetricsUtils'
@@ -11,7 +13,8 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             PORTFOLIO_ITEM_STORE_ID: 'PORTFOLIO_ITEM_STORE_ID',
             GRID_STORE_ID: 'GRID_STORE_ID',
             PER_PROJECT_WIP_LIMIT: 3,
-            CYCLE_TIME_TREND_DAYS: 30
+            CYCLE_TIME_TREND_DAYS: 30,
+            MGMT_PROJECT_NAMES_SETTING: 'MGMT_PROJECT_NAMES_SETTING'
         },
         init: init,
         onPortfolioItemChange: onPortfolioItemChange
@@ -22,17 +25,58 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
      ***/
     function loadPortfolioItemStore() {
         if (selectedPortfolioItem) {
-            Ext.data.StoreManager.lookup(Stores.PORTFOLIO_ITEM_STORE_ID).load({
-                filters: [{
+
+            var filters = Rally.data.wsapi.Filter.and([{
+                    property: 'Parent',
+                    operator: '!=',
+                    value: null
+                },
+                {
                     property: 'Parent.Parent',
                     value: selectedPortfolioItem
-                }]
+                }
+            ]);
+
+            var mgmtProjectNamesSetting = Rally.getApp().getSetting(Stores.MGMT_PROJECT_NAMES_SETTING);
+            if (mgmtProjectNamesSetting) {
+                var projectNameQueries = mgmtProjectNamesSetting.split('\n').map(function(value) {
+                    return {
+                        property: 'Project.Name',
+                        operator: '!=',
+                        value: value
+                    }
+                });
+                if (projectNameQueries.length) {
+                    var projectNameFilters = Rally.data.wsapi.Filter.or(projectNameQueries);
+                    filters.and(projectNameFilters)
+                }
+            }
+
+            Ext.data.StoreManager.lookup(Stores.PORTFOLIO_ITEM_STORE_ID).load({
+                filters: filters
             });
         }
     }
 
-    function onPortfolioItemStoreLoad(store, records, successful) {
-        var data = _.map(store.getGroups(), function(group) {
+    //function onPortfolioItemStoreLoad(store, records, successful) {
+    function onPortfolioItemStoreLoad(store) {
+
+        // Store contains mix of Epics and Features, grouped by parent.
+        // Build a map of Epic ObjectId to Name and filter it out of the
+        // metric data.
+
+        var metricsGroups = _.filter(store.getGroups(), function(group) {
+            if (tsMetricsUtils.getGroupPiType(group) == "PortfolioItem/Epic") {
+                _.forEach(group.children, function(item) {
+                    parentNameMap[item.get('ObjectID')] = item.get('Name');
+                });
+            }
+            if (tsMetricsUtils.getGroupPiType(group) == "PortfolioItem/Feature") {
+                return true;
+            }
+        });
+
+        var data = _.map(metricsGroups, function(group) {
             var metrics = reduceGroup(group);
             var allCycleTimesMedianDays = tsMetricsUtils.getMedian(metrics.allCycleTimes);
             var priorPeriodCycleTimesMedianDays = tsMetricsUtils.getMedian(metrics.priorPeriodCycleTimes);
@@ -44,7 +88,7 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
 
             return Ext.create('com.ca.TechnicalServices.SummaryRow', {
                 FormattedID: group.name.FormattedID,
-                Name: group.name.Name,
+                Name: parentNameMap[group.name],
                 PercentCompleteByStoryPoints: metrics.acceptedLeafStoryPlanEstimateTotal / (metrics.leafStoryPlanEstimateTotal || 1) * 100,
                 PercentCompleteByStoryCount: metrics.acceptedLeafStoryCount / (metrics.leafStoryCount || 1) * 100,
                 RedYellowGreen: getRedYellowGreen(group),
@@ -75,8 +119,9 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             accumulator.leafStoryCount += value.get('LeafStoryCount') || 0;
 
             // Cycle time and trends
-            var actualStartDate = value.get('ActualStartDate');
-            var actualEndDate = value.get('ActualEndDate');
+            var actualStartDate = value.raw.ActualStartDate ? Ext.Date.parse(value.raw.ActualStartDate, 'c') : null;
+            var actualEndDate = value.raw.ActualEndDate ? Ext.Date.parse(value.raw.ActualEndDate, 'c') : null;
+
             if (actualStartDate && actualEndDate) {
                 var days = tsMetricsUtils.getDaysElapsed(actualStartDate, actualEndDate);
                 accumulator.allCycleTimes.push(days);
@@ -121,7 +166,7 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
      * Public methods
      ***/
     function init() {
-        // Store to load portfolio item data
+        // Store to load Feature item data
         Ext.create('Rally.data.wsapi.Store', {
             storeId: Stores.PORTFOLIO_ITEM_STORE_ID,
             model: Stores.PORTFOLIO_ITEM_TYPE,
@@ -158,6 +203,71 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
 
     function onPortfolioItemChange(newValue) {
         selectedPortfolioItem = newValue;
-        loadPortfolioItemStore();
+        return getFeaturesFromPis([selectedPortfolioItem]).then(onPortfolioItemStoreLoad)
+        //loadPortfolioItemStore();
     }
+
+    function getFeaturesFromPis(portfolioItems) {
+        var deferred = Ext.create('Deft.Deferred');
+        var portfolioOids = _.map(portfolioItems, function(item) {
+            return item.get('ObjectID');
+        });
+
+        if (portfolioOids.length < 1) {
+            deferred.reject("No portfolio items set");
+        }
+        else {
+            // User has selected individual portfolio items. Filter out features
+            // not in those PIs
+            var filters = [{
+                    property: '_TypeHierarchy',
+                    operator: 'in',
+                    value: ['PortfolioItem/Epic', 'PortfolioItem/Feature']
+                },
+                {
+                    property: '__At',
+                    value: 'current'
+                },
+                {
+                    property: '_ItemHierarchy',
+                    operator: 'in',
+                    value: portfolioOids
+                }
+            ];
+
+            Ext.create('Rally.data.lookback.SnapshotStore', {
+                autoLoad: true,
+                limit: Infinity,
+                filters: filters,
+                fetch: [
+                    'FormattedID',
+                    'Name',
+                    'Parent',
+                    'LeafStoryCount',
+                    'AcceptedLeafStoryCount',
+                    'LeafStoryPlanEstimateTotal',
+                    'AcceptedLeafStoryPlanEstimateTotal',
+                    'PercentCompleteByStoryCount',
+                    'PercentCompleteByStoryPlanEstimate',
+                    'ActualStartDate',
+                    'ActualEndDate',
+                    'Project',
+                    'PortfolioItemType'
+                ],
+                groupField: 'Parent',
+                listeners: {
+                    load: function(store, data, success) {
+                        if (!success || data.length < 1) {
+                            deferred.reject("Unable to load feature IDs " + portfolioOids);
+                        }
+                        else {
+                            deferred.resolve(store);
+                        }
+                    }
+                }
+            });
+        }
+        return deferred.getPromise();
+    }
+
 });
