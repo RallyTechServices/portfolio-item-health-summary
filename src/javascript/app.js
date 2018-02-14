@@ -45,7 +45,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 },
                 {
                     text: '% Complete by Story Points',
-                    dataIndex: 'PercentCompleteByStoryPoints'
+                    dataIndex: 'PercentCompleteByStoryPoints',
                 },
                 {
                     text: '% Complete by Story Count',
@@ -57,30 +57,70 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 },
                 {
                     text: 'Cycle Time - Overall Median (Days)',
-                    dataIndex: 'CycleTimeMedian'
+                    dataIndex: 'CycleTimeMedian',
+                    renderer: this.nanRenderer
                 },
                 {
                     text: 'Cycle Time - Last 30 Days',
-                    dataIndex: 'CycleTimeCurrentPeriod'
+                    dataIndex: 'CycleTimeCurrentPeriod',
+                    renderer: this.nanRenderer
                 },
                 {
                     text: 'Cycle Time - 30 Day Trend',
-                    dataIndex: 'CycleTimeTrend'
+                    dataIndex: 'CycleTimeTrend',
+                    renderer: this.cycleTimeTrendRenderer
                 },
                 {
                     text: 'Throughput - Last 30 Days',
-                    dataIndex: 'ThroughputMedian'
+                    dataIndex: 'ThroughputMedian',
+                    renderer: this.nanRenderer
                 },
                 {
                     text: 'Throughput - 30 Day Trend',
-                    dataIndex: 'ThroughputTrend'
+                    dataIndex: 'ThroughputTrend',
+                    renderer: this.throughputTrendRenderer
                 },
                 {
                     text: 'WIP Ratio',
-                    dataIndex: 'WipRatio'
+                    dataIndex: 'WipRatio',
+                    renderer: this.nanRenderer
                 }
             ]
         });
+    },
+
+    nanRenderer: function(value) {
+        return isNaN(value) ? "--" : value;
+    },
+
+    cycleTimeTrendRenderer: function(value) {
+        if (value > 0) {
+            return 'Worse'
+        }
+        else if (value < 0) {
+            return 'Better'
+        }
+        else if (value == 0) {
+            return 'Same'
+        }
+        else {
+            return '--'
+        }
+    },
+
+    throughputTrendRenderer: function(value) {
+        if (value > 0) {
+            return 'Better'
+        }
+        else if (value < 0) {
+            return 'Worse'
+        }
+        else if (value == 0) {
+            return 'Same'
+        }
+        else {
+            return '--'
+        }
     },
 
     getSettingsFields: function() {
