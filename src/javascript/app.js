@@ -1,4 +1,4 @@
-/* global Ext CArABU _ com */
+/* global Ext CArABU _ com Rally */
 Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     extend: 'Rally.app.App',
     componentCls: 'app',
@@ -18,7 +18,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     },
 
     launch: function() {
-        var me = this;
+        var periodDays = Rally.getApp().getSetting(com.ca.TechnicalServices.Stores.PERIOD_LENGTH_SETTING) || com.ca.TechnicalServices.Stores.PERIOD_LENGTH_DEFAULT;
         this.logger.setSaveForLater(this.getSetting('saveLog'));
         this.stores = new com.ca.TechnicalServices.Stores();
         this.stores.init();
@@ -61,22 +61,22 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     renderer: this.nanRenderer
                 },
                 {
-                    text: 'Cycle Time - Last 30 Days',
+                    text: 'Cycle Time - Last ' + periodDays + ' Days',
                     dataIndex: 'CycleTimeCurrentPeriod',
                     renderer: this.nanRenderer
                 },
                 {
-                    text: 'Cycle Time - 30 Day Trend',
+                    text: 'Cycle Time - ' + periodDays + ' Day Trend',
                     dataIndex: 'CycleTimeTrend',
                     renderer: this.cycleTimeTrendRenderer
                 },
                 {
-                    text: 'Throughput - Last 30 Days',
+                    text: 'Throughput - Last ' + periodDays + ' Days',
                     dataIndex: 'ThroughputMedian',
                     renderer: this.nanRenderer
                 },
                 {
-                    text: 'Throughput - 30 Day Trend',
+                    text: 'Throughput - ' + periodDays + ' Day Trend',
                     dataIndex: 'ThroughputTrend',
                     renderer: this.throughputTrendRenderer
                 },
@@ -138,6 +138,11 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 name: com.ca.TechnicalServices.Stores.MGMT_PROJECT_NAMES_SETTING,
                 xtype: 'textarea',
                 fieldLabel: 'Management Projects to Exclude',
+            },
+            {
+                name: com.ca.TechnicalServices.Stores.PERIOD_LENGTH_SETTING,
+                xtype: 'numberfield',
+                fieldLabel: 'Trend Time Period (Days)'
             }
         ];
     },

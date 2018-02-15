@@ -7,13 +7,13 @@
             0.0.1
     </title>
     <!--  (c) 2017 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Tue Feb 13 2018 23:59:02 GMT+0000 (UTC) -->
+    <!--  Build Date: Thu Feb 15 2018 17:24:00 GMT+0000 (UTC) -->
 
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Feb 13 2018 23:59:02 GMT+0000 (UTC)";
+        var APP_BUILD_DATE = "Thu Feb 15 2018 17:24:00 GMT+0000 (UTC)";
         var ARTIFACT = "";
         var BUILDER = "ec2-user";
-        var CHECKSUM = "14120179490";
+        var CHECKSUM = "14779425865";
     </script>
 
     <script type="text/javascript" src="https://us1.rallydev.com/apps/2.1/sdk-debug.js"></script>
@@ -426,6 +426,7 @@ Ext.define('com.ca.TechnicalServices.SummaryRow', {
 // TODO (tj) if at theme level are metric still a Feature Level?
 Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
     var selectedPortfolioItem;
+
     return {
         require: [
             'tsMetricsUtils'
@@ -435,7 +436,8 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             PORTFOLIO_ITEM_STORE_ID: 'PORTFOLIO_ITEM_STORE_ID',
             GRID_STORE_ID: 'GRID_STORE_ID',
             PER_PROJECT_WIP_LIMIT: 3,
-            CYCLE_TIME_TREND_DAYS: 30,
+            PERIOD_LENGTH_SETTING: 'PERIOD_LENGTH_SETTING',
+            PERIOD_LENGTH_DEFAULT: 30,
             MGMT_PROJECT_NAMES_SETTING: 'MGMT_PROJECT_NAMES_SETTING',
             ROW_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Epic',
             ROW_METRICS_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Feature',
@@ -519,9 +521,10 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
     }
 
     function getMetrics(group) {
+        var periodDays = Rally.getApp().getSetting(Stores.PERIOD_LENGTH_SETTING) || Stores.PERIOD_LENGTH_DEFAULT;
         var today = new Date();
-        var priorPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, Stores.CYCLE_TIME_TREND_DAYS * 2);
-        var currentPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, Stores.CYCLE_TIME_TREND_DAYS);
+        var priorPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, periodDays * 2);
+        var currentPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, periodDays);
         var priorPeriodEnd = Ext.Date.subtract(currentPeriodStart, Ext.Date.DAY, 1);
         var currentPeriodEnd = Ext.Date.subtract(today, Ext.Date.DAY, 1);
         var result = _.reduce(group.get("Features"), function(accumulator, value) {
@@ -675,7 +678,7 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
 
 });
 
-/* global Ext CArABU _ com */
+/* global Ext CArABU _ com Rally */
 Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     extend: 'Rally.app.App',
     componentCls: 'app',
@@ -695,7 +698,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     },
 
     launch: function() {
-        var me = this;
+        var periodDays = Rally.getApp().getSetting(com.ca.TechnicalServices.Stores.PERIOD_LENGTH_SETTING) || com.ca.TechnicalServices.Stores.PERIOD_LENGTH_DEFAULT;
         this.logger.setSaveForLater(this.getSetting('saveLog'));
         this.stores = new com.ca.TechnicalServices.Stores();
         this.stores.init();
@@ -738,22 +741,22 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     renderer: this.nanRenderer
                 },
                 {
-                    text: 'Cycle Time - Last 30 Days',
+                    text: 'Cycle Time - Last ' + periodDays + ' Days',
                     dataIndex: 'CycleTimeCurrentPeriod',
                     renderer: this.nanRenderer
                 },
                 {
-                    text: 'Cycle Time - 30 Day Trend',
+                    text: 'Cycle Time - ' + periodDays + ' Day Trend',
                     dataIndex: 'CycleTimeTrend',
                     renderer: this.cycleTimeTrendRenderer
                 },
                 {
-                    text: 'Throughput - Last 30 Days',
+                    text: 'Throughput - Last ' + periodDays + ' Days',
                     dataIndex: 'ThroughputMedian',
                     renderer: this.nanRenderer
                 },
                 {
-                    text: 'Throughput - 30 Day Trend',
+                    text: 'Throughput - ' + periodDays + ' Day Trend',
                     dataIndex: 'ThroughputTrend',
                     renderer: this.throughputTrendRenderer
                 },
@@ -815,6 +818,11 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 name: com.ca.TechnicalServices.Stores.MGMT_PROJECT_NAMES_SETTING,
                 xtype: 'textarea',
                 fieldLabel: 'Management Projects to Exclude',
+            },
+            {
+                name: com.ca.TechnicalServices.Stores.PERIOD_LENGTH_SETTING,
+                xtype: 'numberfield',
+                fieldLabel: 'Trend Time Period (Days)'
             }
         ];
     },

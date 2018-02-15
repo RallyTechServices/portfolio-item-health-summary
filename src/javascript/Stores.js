@@ -3,6 +3,7 @@
 // TODO (tj) if at theme level are metric still a Feature Level?
 Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
     var selectedPortfolioItem;
+
     return {
         require: [
             'tsMetricsUtils'
@@ -12,7 +13,8 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
             PORTFOLIO_ITEM_STORE_ID: 'PORTFOLIO_ITEM_STORE_ID',
             GRID_STORE_ID: 'GRID_STORE_ID',
             PER_PROJECT_WIP_LIMIT: 3,
-            CYCLE_TIME_TREND_DAYS: 30,
+            PERIOD_LENGTH_SETTING: 'PERIOD_LENGTH_SETTING',
+            PERIOD_LENGTH_DEFAULT: 30,
             MGMT_PROJECT_NAMES_SETTING: 'MGMT_PROJECT_NAMES_SETTING',
             ROW_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Epic',
             ROW_METRICS_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Feature',
@@ -96,9 +98,10 @@ Ext.define("com.ca.TechnicalServices.Stores", function(Stores) {
     }
 
     function getMetrics(group) {
+        var periodDays = Rally.getApp().getSetting(Stores.PERIOD_LENGTH_SETTING) || Stores.PERIOD_LENGTH_DEFAULT;
         var today = new Date();
-        var priorPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, Stores.CYCLE_TIME_TREND_DAYS * 2);
-        var currentPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, Stores.CYCLE_TIME_TREND_DAYS);
+        var priorPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, periodDays * 2);
+        var currentPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, periodDays);
         var priorPeriodEnd = Ext.Date.subtract(currentPeriodStart, Ext.Date.DAY, 1);
         var currentPeriodEnd = Ext.Date.subtract(today, Ext.Date.DAY, 1);
         var result = _.reduce(group.get("Features"), function(accumulator, value) {
