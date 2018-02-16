@@ -1,5 +1,5 @@
 /* global Ext */
-Ext.define('com.ca.TechnicalServices.FeatureGroup', {
+Ext.define('TsFeatureGroup', {
     extend: 'Ext.data.Model',
     fields: [
         { name: 'PortfolioItem' },

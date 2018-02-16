@@ -5,13 +5,16 @@
     "className": "com.ca.TechnicalServices.PortfolioItemHealthSummary",
     "artifact": "",
     "javascript": [
+        "src/javascript/utils/Polyfills.js",
         "src/javascript/utils/__ts-info-link.js",
         "src/javascript/utils/__ts-logger.js",
         "src/javascript/utils/__ts-utilities.js",
-        "src/javascript/MetricsUtils.js",
-        "src/javascript/FeatureGroup.js",
         "src/javascript/SummaryRow.js",
-        "src/javascript/Stores.js",
+        "src/javascript/FeatureGroup.js",
+        "src/javascript/utils/Overrides.js",
+        "src/javascript/Constants.js",
+        "src/javascript/MetricsUtils.js",
+        "src/javascript/MetricsMgr.js",
         "src/javascript/app.js"
     ]
 }

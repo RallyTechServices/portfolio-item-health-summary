@@ -11,3 +11,4 @@ deploy/app.min.js
 .settings
 deploy/ConfluenceApp.txt
 deploy/ExternalApp.txt
+deploy/App.txt

@@ -1,11 +1,18 @@
 /* global Ext _ */
-Ext.define('tsMetricsUtils', function(MetricsUtils) {
+Ext.define('TsMetricsUtils', function(MetricsUtils) {
     return {
         statics: {
             getMedian: getMedian,
-            getDaysElapsed: getDaysElapsed
+            getDaysElapsed: getDaysElapsed,
+            startsWith: startsWith,
             //toPercentString: toPercentString
         }
+    }
+
+    function startsWith(string) {
+        String.prototype.startsWith = function(search, pos) {
+                return this.substr(!pos || pos < 0 ? 0 : +pos, search.length) === search;
+            };
     }
 
     function getMedian(values) {

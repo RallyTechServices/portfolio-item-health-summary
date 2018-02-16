@@ -1,4 +1,4 @@
-/* global Ext CArABU _ com Rally */
+/* global Ext CArABU _ com Rally TsConstants */
 Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     extend: 'Rally.app.App',
     componentCls: 'app',
@@ -18,74 +18,100 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     },
 
     launch: function() {
-        var periodDays = Rally.getApp().getSetting(com.ca.TechnicalServices.Stores.PERIOD_LENGTH_SETTING) || com.ca.TechnicalServices.Stores.PERIOD_LENGTH_DEFAULT;
         this.logger.setSaveForLater(this.getSetting('saveLog'));
-        this.stores = new com.ca.TechnicalServices.Stores();
-        this.stores.init();
+        this.metricsMgr = new TsMetricsMgr();
         this.down('#controlsArea').add({
             xtype: 'rallysearchcombobox',
             storeConfig: {
-                model: 'portfolioitem/initiative',
+                model: TsConstants.SELECTABLE_PORTFOLIO_ITEM_TYPE,
                 autoLoad: true
             },
-            fieldLabel: "Initiative",
+            fieldLabel: TsConstants.SELECTABLE_PORTFOLIO_ITEM_TYPE_LABEL,
             listeners: {
                 scope: this,
                 change: function(control, newValue) {
-                    this.stores.onPortfolioItemChange(control.getRecord());
+                    //this.metricsMgr.onPortfolioItemChange(control.getRecord());
+                    this.addGrid(control.getRecord());
                 }
             }
         });
-        this.down('#gridArea').add({
-            xtype: 'rallygrid',
-            store: Ext.data.StoreManager.lookup(com.ca.TechnicalServices.Stores.GRID_STORE_ID),
-            columnCfgs: [{
-                    text: 'Name',
-                    dataIndex: 'Name',
-                },
-                {
-                    text: '% Complete by Story Points',
-                    dataIndex: 'PercentCompleteByStoryPoints',
-                },
-                {
-                    text: '% Complete by Story Count',
-                    dataIndex: 'PercentCompleteByStoryCount'
-                },
-                {
-                    text: 'RYG',
-                    dataIndex: 'RedYellowGreen'
-                },
-                {
-                    text: 'Cycle Time - Overall Median (Days)',
-                    dataIndex: 'CycleTimeMedian',
-                    renderer: this.nanRenderer
-                },
-                {
-                    text: 'Cycle Time - Last ' + periodDays + ' Days',
-                    dataIndex: 'CycleTimeCurrentPeriod',
-                    renderer: this.nanRenderer
-                },
-                {
-                    text: 'Cycle Time - ' + periodDays + ' Day Trend',
-                    dataIndex: 'CycleTimeTrend',
-                    renderer: this.cycleTimeTrendRenderer
-                },
-                {
-                    text: 'Throughput - Last ' + periodDays + ' Days',
-                    dataIndex: 'ThroughputMedian',
-                    renderer: this.nanRenderer
-                },
-                {
-                    text: 'Throughput - ' + periodDays + ' Day Trend',
-                    dataIndex: 'ThroughputTrend',
-                    renderer: this.throughputTrendRenderer
-                },
-                {
-                    text: 'WIP Ratio',
-                    dataIndex: 'WipRatio',
-                    renderer: this.nanRenderer
+    },
+
+    addGrid: function(parent) {
+        var periodDays = Rally.getApp().getSetting(TsConstants.PERIOD_LENGTH_SETTING) || TsConstants.PERIOD_LENGTH_DEFAULT;
+        Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
+            models: ['PortfolioItem/Theme'],
+            autoLoad: true,
+            enableHierarchy: true,
+            filters: [{
+                property: 'Parent.ObjectID',
+                value: parent.get('ObjectID')
+            }],
+            listeners: {
+                scope: this,
+                load: function(store, node, records) {
+                    this.metricsMgr.buildMetrics(records)
                 }
-            ]
+            },
+        }).then({
+            scope: this,
+            success: function(store) {
+                // TODO (tj) use rallygridboard to get filtering plugins
+                this.down('#gridArea').add({
+                    xtype: 'rallytreegrid',
+                    store: store,
+                    columnCfgs: [{
+                            text: 'Name',
+                            dataIndex: 'Name',
+                        },
+                        {
+                            text: '% Complete by Story Points',
+                            dataIndex: 'PercentDoneByStoryPlanEstimate',
+                        },
+                        {
+                            text: '% Complete by Story Count',
+                            dataIndex: 'PercentDoneByStoryCount'
+                        },
+                        {
+                            text: 'Cycle Time - Overall Median (Days)',
+                            //dataIndex: 'CycleTimeMedian',
+                            tpl: '{CycleTimeMedian}',
+                            xtype: 'templatecolumn',
+                            //renderer: this.nanRenderer
+                        },
+                        {
+                            text: 'Cycle Time - Last ' + periodDays + ' Days',
+                            tpl: '{CycleTimeCurrentPeriod}',
+                            xtype: 'templatecolumn',
+                            //renderer: this.nanRenderer
+                        },
+                        {
+                            text: 'Cycle Time - ' + periodDays + ' Day Trend',
+                            tpl: '{CycleTimeTrend}',
+                            xtype: 'templatecolumn',
+                            //renderer: this.cycleTimeTrendRenderer
+                        },
+                        {
+                            text: 'Throughput - Last ' + periodDays + ' Days',
+                            tpl: '{ThroughputMedian}',
+                            xtype: 'templatecolumn',
+                            //renderer: this.nanRenderer
+                        },
+                        {
+                            text: 'Throughput - ' + periodDays + ' Day Trend',
+                            tpl: '{ThroughputTrend}',
+                            xtype: 'templatecolumn',
+                            //renderer: this.throughputTrendRenderer
+                        },
+                        {
+                            text: 'WIP Ratio',
+                            tpl: '{WipRatio}',
+                            xtype: 'templatecolumn',
+                            //renderer: this.nanRenderer
+                        }
+                    ]
+                });
+            }
         });
     },
 
@@ -135,12 +161,12 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
 
             },
             {
-                name: com.ca.TechnicalServices.Stores.MGMT_PROJECT_NAMES_SETTING,
+                name: TsConstants.MGMT_PROJECT_NAMES_SETTING,
                 xtype: 'textarea',
                 fieldLabel: 'Management Projects to Exclude',
             },
             {
-                name: com.ca.TechnicalServices.Stores.PERIOD_LENGTH_SETTING,
+                name: TsConstants.PERIOD_LENGTH_SETTING,
                 xtype: 'numberfield',
                 fieldLabel: 'Trend Time Period (Days)'
             }
