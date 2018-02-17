@@ -2,13 +2,11 @@
 Ext.define('TsSummaryRow', {
     extend: 'Ext.data.Model',
     fields: [
-        { name: 'FormattedID', type: 'string' },
-        { name: 'Name', type: 'string' },
-        { name: 'CycleTimeMedian', type: 'int' },
-        { name: 'CycleTimeCurrentPeriod', type: 'int' },
-        { name: 'CycleTimeTrend', type: 'string' },
-        { name: 'ThroughputMedian', type: 'float' },
-        { name: 'ThroughputTrend', type: 'string' },
-        { name: 'WipRatio', type: 'float' }
+        { name: 'CycleTimeMedian', type: 'int', defaultValue: NaN },
+        { name: 'CycleTimeCurrentPeriod', type: 'int', defaultValue: NaN },
+        { name: 'CycleTimeTrend', type: 'string', defaultValue: "Loading" },
+        { name: 'ThroughputMedian', type: 'float', defaultValue: NaN },
+        { name: 'ThroughputTrend', type: 'string', defaultValue: "Loading" },
+        { name: 'WipRatio', type: 'float', defaultValue: NaN }
     ]
 });

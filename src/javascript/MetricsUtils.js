@@ -5,14 +5,26 @@ Ext.define('TsMetricsUtils', function(MetricsUtils) {
             getMedian: getMedian,
             getDaysElapsed: getDaysElapsed,
             startsWith: startsWith,
+            showMetrics: showMetrics,
             //toPercentString: toPercentString
         }
     }
 
+    function showMetrics(record) {
+        var result = true;
+        if (record.get('_type').startsWith('portfolioitem/theme')) {
+            result = false
+        }
+        else if (!record.get('_type').startsWith('portfolioitem')) {
+            result = false
+        }
+        return result;
+    }
+
     function startsWith(string) {
         String.prototype.startsWith = function(search, pos) {
-                return this.substr(!pos || pos < 0 ? 0 : +pos, search.length) === search;
-            };
+            return this.substr(!pos || pos < 0 ? 0 : +pos, search.length) === search;
+        };
     }
 
     function getMedian(values) {

@@ -1,8 +1,8 @@
-.app {
-}
+.app {}
+
 .tsinfolink {
-    position:absolute;
-    right:0px;
+    position: absolute;
+    right: 0px;
     width: 14px;
     height: 14px;
     border-radius: 7px;
@@ -14,4 +14,16 @@
     margin-top: 25px;
     margin-right: 5px;
     cursor: pointer;
+}
+
+.better {
+    background-color: rgb(130, 190, 55);
+}
+
+.worse {
+    background-color: rgb(245, 88, 64);
+}
+
+.caution {
+    background-color: rgb(249, 203, 7);
 }

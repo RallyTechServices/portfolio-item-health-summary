@@ -1,4 +1,4 @@
-/* global Ext Rally com _ */
+/* global Ext Rally com _ TsSummaryRow */
 Ext.override(Rally.data.wsapi.TreeStore, {
     _decorateModels: function() {
         var models = this.model;
@@ -12,7 +12,7 @@ Ext.override(Rally.data.wsapi.TreeStore, {
             _.forEach(summaryFields, function(summaryField) {
                 // Don't add fields that already exist
                 if (!m.getField(summaryField.name)) {
-                    m.addField(summaryField);
+                    //m.addField(summaryField);
                 }
             });
         });
