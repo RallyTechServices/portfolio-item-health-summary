@@ -14,7 +14,7 @@ Ext.define("TsMetricsMgr", function(Stores) {
      ***/
     function buildMetrics(records) {
         _.forEach(records, function(record) {
-            if (record.get('_type').startsWith('portfolioitem')) {
+            if (TsMetricsUtils.showMetrics(record)) {
                 // Get features for this PI
                 getDescendentsFromPis([record], [TsConstants.ROW_METRICS_PORTFOLIO_ITEM_TYPE])
                     .then(function(features) {
@@ -64,16 +64,14 @@ Ext.define("TsMetricsMgr", function(Stores) {
 
             // WIP Ratio
             var uniqueProjectCount = _.unique(metrics.projects, '_ref').length;
-
+            var wipRatio = metrics.workInProgress / uniqueProjectCount;
             return Ext.create('TsSummaryRow', {
-                FormattedID: portfolioItem.get('FormattedID'),
-                Name: portfolioItem.get('Name'),
                 CycleTimeMedian: allCycleTimesMedianDays,
                 CycleTimeCurrentPeriod: currentPeriodCycleTimesMedianDays,
                 CycleTimeTrend: cycleTimesTrend,
                 ThroughputMedian: metrics.currentPeriodThroughput,
                 ThroughputTrend: metrics.currentPeriodThroughput - metrics.priorPeriodThroughput,
-                WipRatio: (metrics.workInProgress / (uniqueProjectCount * TsConstants.PER_PROJECT_WIP_LIMIT)).toFixed(2)
+                WipRatio: wipRatio
             });
         });
         return summaryRows;

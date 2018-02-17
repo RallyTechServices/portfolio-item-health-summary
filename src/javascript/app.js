@@ -1,4 +1,4 @@
-/* global Ext CArABU _ com Rally TsConstants */
+/* global Ext CArABU _ com Rally TsConstants TsMetricsMgr TsMetricsUtils */
 Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     extend: 'Rally.app.App',
     componentCls: 'app',
@@ -74,40 +74,58 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                         },
                         {
                             text: 'Cycle Time - Overall Median (Days)',
-                            //dataIndex: 'CycleTimeMedian',
-                            tpl: '{CycleTimeMedian}',
                             xtype: 'templatecolumn',
-                            //renderer: this.nanRenderer
+                            tpl: new Ext.XTemplate(''),
+                            scope: this,
+                            renderer: function(value, meta, record) {
+                                return this.nanRenderer(record, 'CycleTimeMedian');
+                            }
                         },
                         {
                             text: 'Cycle Time - Last ' + periodDays + ' Days',
-                            tpl: '{CycleTimeCurrentPeriod}',
                             xtype: 'templatecolumn',
-                            //renderer: this.nanRenderer
+                            tpl: new Ext.XTemplate(''),
+                            scope: this,
+                            renderer: function(value, meta, record) {
+                                return this.nanRenderer(record, 'CycleTimeCurrentPeriod');
+                            }
                         },
                         {
                             text: 'Cycle Time - ' + periodDays + ' Day Trend',
                             tpl: '{CycleTimeTrend}',
                             xtype: 'templatecolumn',
-                            //renderer: this.cycleTimeTrendRenderer
+                            scope: this,
+                            renderer: function(value, meta, record) {
+                                return this.cycleTimeTrendRenderer(record, 'CycleTimeTrend');
+                            }
                         },
                         {
                             text: 'Throughput - Last ' + periodDays + ' Days',
-                            tpl: '{ThroughputMedian}',
                             xtype: 'templatecolumn',
-                            //renderer: this.nanRenderer
+                            tpl: new Ext.XTemplate(''),
+                            scope: this,
+                            renderer: function(value, meta, record) {
+                                return this.nanRenderer(record, 'ThroughputMedian');
+                            }
+
                         },
                         {
                             text: 'Throughput - ' + periodDays + ' Day Trend',
                             tpl: '{ThroughputTrend}',
                             xtype: 'templatecolumn',
-                            //renderer: this.throughputTrendRenderer
+                            scope: this,
+                            renderer: function(value, meta, record) {
+                                return this.throughputTrendRenderer(record, 'ThroughputTrend');
+                            }
                         },
                         {
-                            text: 'WIP Ratio',
-                            tpl: '{WipRatio}',
+                            text: 'Active Features Per-Team (Average)',
                             xtype: 'templatecolumn',
-                            //renderer: this.nanRenderer
+                            tpl: new Ext.XTemplate(''),
+                            scope: this,
+                            renderer: function(value, meta, record) {
+                                return this.wipRenderer(record);
+                            }
                         }
                     ]
                 });
@@ -115,38 +133,100 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         });
     },
 
-    nanRenderer: function(value) {
-        return isNaN(value) ? "--" : value;
-    },
+    wipRenderer: function(record) {
+        var value = record.get('WipRatio');
+        var result = value;
 
-    cycleTimeTrendRenderer: function(value) {
-        if (value > 0) {
-            return 'Worse'
-        }
-        else if (value < 0) {
-            return 'Better'
-        }
-        else if (value == 0) {
-            return 'Same'
+        if (TsMetricsUtils.showMetrics(record) == false) {
+            result = '--'
         }
         else {
-            return '--'
+            if (value === undefined) {
+                result = 'Loading...';
+            }
+            else if (isNaN(value)) {
+                result = '--'
+            }
+            else if (value > 0 && value < 1) {
+                result = 1;
+            }
+            else {
+                result = Math.round(value);
+            }
         }
+        return result;
     },
 
-    throughputTrendRenderer: function(value) {
-        if (value > 0) {
-            return 'Better'
-        }
-        else if (value < 0) {
-            return 'Worse'
-        }
-        else if (value == 0) {
-            return 'Same'
+    nanRenderer: function(record, dataIndex) {
+        var value = record.get(dataIndex);
+        var result = value;
+
+        if (TsMetricsUtils.showMetrics(record) == false) {
+            result = '--'
         }
         else {
-            return '--'
+            if (value === undefined) {
+                result = 'Loading...';
+            }
+            else if (isNaN(value)) {
+                result = '--'
+            }
         }
+        return result;
+    },
+
+    cycleTimeTrendRenderer: function(record, dataIndex) {
+        var value = record.get(dataIndex);
+        var result = value;
+
+        if (TsMetricsUtils.showMetrics(record) == false) {
+            result = '--'
+        }
+        else {
+            if (value === undefined) {
+                result = 'Loading...';
+            }
+            else if (value > 0) {
+                result = '<span class="caution">Slower</span> by ' + value + ' Days'
+            }
+            else if (value < 0) {
+                result = '<span class="better">Faster</span> by ' + value + ' Days'
+            }
+            else if (value == 0) {
+                result = 'Unchanged'
+            }
+            else {
+                result = '--'
+            }
+        }
+        return result;
+    },
+
+    throughputTrendRenderer: function(record, dataIndex) {
+        var value = record.get(dataIndex);
+        var result = value;
+
+        if (TsMetricsUtils.showMetrics(record) == false) {
+            result = '--'
+        }
+        else {
+            if (value === undefined) {
+                result = 'Loading...';
+            }
+            else if (value > 0) {
+                result = '<span class="better">Faster</span> by ' + value + ' Features'
+            }
+            else if (value < 0) {
+                result = '<span class="caution">Slower</span> by ' + value + ' Features'
+            }
+            else if (value == 0) {
+                result = 'Unchanged'
+            }
+            else {
+                result = '--'
+            }
+        }
+        return result;
     },
 
     getSettingsFields: function() {
