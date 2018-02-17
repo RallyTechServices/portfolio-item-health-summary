@@ -152,6 +152,9 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             }
             else {
                 result = Math.round(value);
+                if (result >= 4) {
+                    result = '<span class="caution">' + result + '</span>';
+                }
             }
         }
         return result;
@@ -190,7 +193,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 result = '<span class="caution">Slower</span> by ' + value + ' Days'
             }
             else if (value < 0) {
-                result = '<span class="better">Faster</span> by ' + value + ' Days'
+                result = '<span class="better">Faster</span> by ' + Math.abs(value) + ' Days'
             }
             else if (value == 0) {
                 result = 'Unchanged'
@@ -217,7 +220,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 result = '<span class="better">Faster</span> by ' + value + ' Features'
             }
             else if (value < 0) {
-                result = '<span class="caution">Slower</span> by ' + value + ' Features'
+                result = '<span class="caution">Slower</span> by ' + Math.abs(value) + ' Features'
             }
             else if (value == 0) {
                 result = 'Unchanged'
