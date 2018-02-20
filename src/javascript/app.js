@@ -1,4 +1,4 @@
-/* global Ext CArABU _ com Rally TsConstants TsMetricsMgr TsMetricsUtils */
+/* global Ext CArABU _ com Rally TsConstants TsMetricsMgr TsMetricsUtils TsSvgIcons */
 Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     extend: 'Rally.app.App',
     componentCls: 'app',
@@ -153,7 +153,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             else {
                 result = Math.round(value);
                 if (result >= 4) {
-                    result = '<span class="caution">' + result + '</span>';
+                    result = '<div class="colorcell caution">' + result + '</div>';
                 }
             }
         }
@@ -190,19 +190,23 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 result = 'Loading...';
             }
             else if (value > 0) {
-                result = '<span class="caution">Slower</span> by ' + value + ' Days'
+                result = this.getEmojiDiv('worse') + value + ' days slower'
             }
             else if (value < 0) {
-                result = '<span class="better">Faster</span> by ' + Math.abs(value) + ' Days'
+                result = this.getEmojiDiv('better') + Math.abs(value) + ' days faster'
             }
             else if (value == 0) {
-                result = 'Unchanged'
+                result = this.getEmojiDiv('neutral') + 'Unchanged'
             }
             else {
                 result = '--'
             }
         }
         return result;
+    },
+
+    getEmojiDiv: function(name) {
+        return '<div class="emojicell ' + name + '">' + TsSvgIcons[name] + '</div>'
     },
 
     throughputTrendRenderer: function(record, dataIndex) {
@@ -217,13 +221,13 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 result = 'Loading...';
             }
             else if (value > 0) {
-                result = '<span class="better">Faster</span> by ' + value + ' Features'
+                result = this.getEmojiDiv('better') + value + ' more Features'
             }
             else if (value < 0) {
-                result = '<span class="caution">Slower</span> by ' + Math.abs(value) + ' Features'
+                result = this.getEmojiDiv('worse') + Math.abs(value) + ' less Features'
             }
             else if (value == 0) {
-                result = 'Unchanged'
+                result = this.getEmojiDiv('neutral') + 'Unchanged'
             }
             else {
                 result = '--'

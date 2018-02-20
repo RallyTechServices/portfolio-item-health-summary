@@ -16,14 +16,22 @@
     cursor: pointer;
 }
 
-.better {
+.colorcell {
+    border-radius: 3px;
+}
+
+.colorcell .better {
     background-color: rgb(130, 190, 55);
 }
 
-.worse {
+.colorcell .worse {
     background-color: rgb(245, 88, 64);
 }
 
-.caution {
+.colorcell .caution {
     background-color: rgb(249, 203, 7);
+}
+
+.emojicell svg {
+    height: 15px;
 }
