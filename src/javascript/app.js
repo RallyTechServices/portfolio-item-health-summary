@@ -24,7 +24,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             xtype: 'rallysearchcombobox',
             storeConfig: {
                 model: TsConstants.SELECTABLE_PORTFOLIO_ITEM_TYPE,
-                autoLoad: true
+                autoLoad: true,
             },
             fieldLabel: TsConstants.SELECTABLE_PORTFOLIO_ITEM_TYPE_LABEL,
             listeners: {
@@ -57,7 +57,9 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             scope: this,
             success: function(store) {
                 // TODO (tj) use rallygridboard to get filtering plugins
-                this.down('#gridArea').add({
+                var gridArea = this.down('#gridArea');
+                gridArea.removeAll();
+                gridArea.add({
                     xtype: 'rallytreegrid',
                     store: store,
                     columnCfgs: [{
@@ -119,7 +121,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                             }
                         },
                         {
-                            text: 'Active Features Per-Team (Average)',
+                            text: TsConstants.WIP_LABEL,
                             xtype: 'templatecolumn',
                             tpl: new Ext.XTemplate(''),
                             scope: this,
@@ -134,7 +136,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     },
 
     wipRenderer: function(record) {
-        var value = record.get('WipRatio');
+        var value = record.get('FeatureWipAverage');
         var result = value;
 
         if (TsMetricsUtils.showMetrics(record) == false) {
@@ -147,6 +149,9 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             else if (isNaN(value)) {
                 result = '--'
             }
+            else if (value == Infinity) {
+                result = 0;
+            }
             else if (value > 0 && value < 1) {
                 result = 1;
             }
@@ -157,6 +162,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 }
             }
         }
+        //console.log(record.get("FormattedID") + ' ' + value + ' => ' + result);
         return result;
     },
 
@@ -248,15 +254,24 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
 
             },
             {
-                name: TsConstants.MGMT_PROJECT_NAMES_SETTING,
-                xtype: 'textarea',
-                fieldLabel: 'Management Projects to Exclude',
-            },
-            {
                 name: TsConstants.PERIOD_LENGTH_SETTING,
                 xtype: 'numberfield',
                 fieldLabel: 'Trend Time Period (Days)'
-            }
+            },
+            {
+                name: TsConstants.INCLUDED_PROJECT_TEAM_TYPES_SETTING, // TODO: Defaults
+                xtype: 'textfield',
+                disabled: true,
+                value: 'Agile',
+                fieldLabel: 'Project Team Types to include in "' + TsConstants.WIP_LABEL + '" calculation',
+            },
+            {
+                name: TsConstants.PER_TEAM_WIP_MAX_SETTING, // TODO Defaults
+                xtype: 'textfield',
+                disabled: true,
+                value: '4',
+                fieldLabel: 'Max "' + TsConstants.WIP_LABEL + '"',
+            },
         ];
     },
 

@@ -20,15 +20,15 @@
     border-radius: 3px;
 }
 
-.colorcell .better {
+.colorcell.better {
     background-color: rgb(130, 190, 55);
 }
 
-.colorcell .worse {
+.colorcell.worse {
     background-color: rgb(245, 88, 64);
 }
 
-.colorcell .caution {
+.colorcell.caution {
     background-color: rgb(249, 203, 7);
 }
 

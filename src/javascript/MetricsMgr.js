@@ -16,12 +16,17 @@ Ext.define("TsMetricsMgr", function(Stores) {
         _.forEach(records, function(record) {
             if (TsMetricsUtils.showMetrics(record)) {
                 // Get features for this PI
-                getDescendentsFromPis([record], [TsConstants.ROW_METRICS_PORTFOLIO_ITEM_TYPE])
-                    .then(function(features) {
-                        return Ext.create('TsFeatureGroup', {
-                            PortfolioItem: record,
-                            Features: features
-                        });
+                getLeafProjectsHash(record)
+                    .then(function(leafProjectsHash) {
+                        var recordOid = record.get('ObjectID');
+                        return getDescendents([recordOid], [TsConstants.ROW_METRICS_PORTFOLIO_ITEM_TYPE])
+                            .then(function(features) {
+                                return Ext.create('TsFeatureGroup', {
+                                    PortfolioItem: record,
+                                    Features: features,
+                                    LeafProjectsHash: leafProjectsHash || {}
+                                });
+                            })
                     })
                     .then(function(featureGroup) {
                         return onGroupsLoaded([featureGroup]);
@@ -63,15 +68,19 @@ Ext.define("TsMetricsMgr", function(Stores) {
             var cycleTimesTrend = (currentPeriodCycleTimesMedianDays - priorPeriodCycleTimesMedianDays).toFixed(0);
 
             // WIP Ratio
-            var uniqueProjectCount = _.unique(metrics.projects, '_ref').length;
-            var wipRatio = metrics.workInProgress / uniqueProjectCount;
+            var featureWipAverage = 0;
+            var leafProjectsHash = group.get('LeafProjectsHash');
+            if (leafProjectsHash) {
+                featureWipAverage = metrics.workInProgress / Object.keys(leafProjectsHash).length;
+            }
+
             return Ext.create('TsSummaryRow', {
                 CycleTimeMedian: allCycleTimesMedianDays,
                 CycleTimeCurrentPeriod: currentPeriodCycleTimesMedianDays,
                 CycleTimeTrend: cycleTimesTrend,
                 ThroughputMedian: metrics.currentPeriodThroughput,
                 ThroughputTrend: metrics.currentPeriodThroughput - metrics.priorPeriodThroughput,
-                WipRatio: wipRatio
+                FeatureWipAverage: featureWipAverage
             });
         });
         return summaryRows;
@@ -106,10 +115,11 @@ Ext.define("TsMetricsMgr", function(Stores) {
 
             // WIP
             if (actualStartDate && !actualEndDate) {
+                //var projectOid = value.get('Project');
+                //if (group.get('LeafProjectsHash').hasOwnProperty(projectOid)) {
                 accumulator.workInProgress++;
+                //}
             }
-
-            accumulator.projects.push(value.get('Project'))
 
             return accumulator;
         }, {
@@ -124,70 +134,117 @@ Ext.define("TsMetricsMgr", function(Stores) {
         return result;
     }
 
-
-    function getRedYellowGreen(group) {
-        // TODO (tj) See https://help.rallydev.com/track-portfolio-items#coloralg
-        return "TODO"
-    }
-
     /***
      * Public methods
      ***/
-
-    function getDescendentsFromPis(portfolioItems, descendentTypes) {
+    function getLeafProjectsHash(record) {
+        var result = {};
+        var objectId = record.get('Project').ObjectID;
         var deferred = Ext.create('Deft.Deferred');
-        var portfolioOids = _.map(portfolioItems, function(item) {
-            return item.get('ObjectID');
-        });
 
-        if (portfolioOids.length < 1) {
-            deferred.reject("No portfolio items set");
+        if (!record.get('Project').Children || record.get('Project').Children.Count == 0) {
+            // This project IS a leaf project, include it as the count
+            result[record.get('Project').ObjectID] = record.get('Project').Name;
+            deferred.resolve(result);
         }
         else {
-            // User has selected individual portfolio items. Filter out features
-            // not in those PIs
-            var filters = [{
-                    property: '_TypeHierarchy',
-                    operator: 'in',
-                    value: descendentTypes
-                },
-                {
-                    property: '__At',
-                    value: 'current'
-                },
-                {
-                    property: '_ItemHierarchy',
-                    operator: 'in',
-                    value: portfolioOids
+            var includedTeamTypes = ['Agile']; // TOOD (tj) Get from settings
+            var teamTypesFilters = Rally.data.wsapi.Filter.or(_.map(includedTeamTypes, function(teamType) {
+                return {
+                    property: 'c_TeamType',
+                    value: teamType
                 }
-                // TODO (tj) Filter "mgmt" projects
-            ];
+            }));
 
-            Ext.create('Rally.data.lookback.SnapshotStore', {
+            var projectFilters = Rally.data.wsapi.Filter.or(_.map(_.range(1, 10), function(depth) {
+                    var parents = [];
+                    do {
+                        parents.push('Parent');
+                    } while (parents.length < depth);
+
+                    return {
+                        property: parents.join('.') + '.ObjectID',
+                        value: objectId
+                    }
+                }))
+                .and({
+                    property: 'Children.ObjectID',
+                    value: null
+                });
+
+            Ext.create('Rally.data.wsapi.Store', {
+                model: 'Project',
                 autoLoad: true,
-                limit: Infinity,
-                filters: filters,
-                fetch: [
-                    'FormattedID',
-                    'Name',
-                    'ActualStartDate',
-                    'ActualEndDate',
-                    'Project',
-                    'PortfolioItemType',
-                    'PortfolioItemTypeName'
-                ],
+                filters: teamTypesFilters.and(projectFilters),
+                fetch: ['Children', 'Name', 'c_TeamType'],
                 listeners: {
+                    scope: this,
                     load: function(store, data, success) {
                         if (!success) {
-                            deferred.reject("Unable to load PortfolioItem IDs " + portfolioOids);
+                            deferred.reject("Unable to load child projects for Object ID " + objectId);
                         }
                         else {
-                            deferred.resolve(data);
+                            _.forEach(data, function(project) {
+                                result[project.get('ObjectID')] = project.get('Name')
+                            });
+                            deferred.resolve(result);
                         }
                     }
                 }
             });
         }
+        return deferred.getPromise();
+    }
+
+    function getDescendents(objectIds, descendentTypes, extraFilters) {
+        var deferred = Ext.create('Deft.Deferred');
+
+        var filters = extraFilters;
+        if (!filters) {
+            filters = [];
+        }
+        // User has selected individual portfolio items. Filter out features
+        // not in those PIs
+        filters.push({
+            property: '_TypeHierarchy',
+            operator: 'in',
+            value: descendentTypes
+        });
+        filters.push({
+            property: '__At',
+            value: 'current'
+        });
+        filters.push({
+            property: '_ItemHierarchy',
+            operator: 'in',
+            value: objectIds
+        });
+
+        Ext.create('Rally.data.lookback.SnapshotStore', {
+            autoLoad: true,
+            limit: Infinity,
+            filters: filters,
+            fetch: [
+                'FormattedID',
+                'Name',
+                'ActualStartDate',
+                'ActualEndDate',
+                'Project',
+                'PortfolioItemType',
+                'PortfolioItemTypeName'
+            ],
+            listeners: {
+                load: function(store, data, success) {
+                    if (!success) {
+                        deferred.reject("Unable to load descendents for Object IDs " + objectIds);
+                    }
+                    else {
+                        deferred.resolve(data);
+                    }
+                }
+            }
+        });
+
         return deferred.getPromise();
     }
 
