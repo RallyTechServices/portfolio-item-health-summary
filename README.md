@@ -14,6 +14,9 @@
 * since that contains data from features from all projects.
 *  * Lookback can be VERY slow or never return. Consider WSAPI
 
+## Version History
+* 0.0.1 - Initial version for basic testing
+
 ## Development Notes
 
 
