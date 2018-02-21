@@ -15,6 +15,10 @@ Ext.define("TsConstants", {
         SELECTABLE_PORTFOLIO_ITEM_TYPE_LABEL: 'Affiliate',
         ROW_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Epic',
         ROW_METRICS_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Feature',
+        WIP_LABEL: 'Active Features Per-Dev Team (Average)',
+
+        INCLUDED_PROJECT_TEAM_TYPES_SETTING: 'INCLUDED_PROJECT_TEAM_TYPES_SETTING',
+        PER_TEAM_WIP_MAX_SETTING: 'PER_TEAM_WIP_MAX_SETTING',
     }
 
 });

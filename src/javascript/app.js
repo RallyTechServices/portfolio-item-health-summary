@@ -1,4 +1,4 @@
-/* global Ext CArABU _ com Rally TsConstants TsMetricsMgr TsMetricsUtils */
+/* global Ext CArABU _ com Rally TsConstants TsMetricsMgr TsMetricsUtils TsSvgIcons */
 Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     extend: 'Rally.app.App',
     componentCls: 'app',
@@ -24,7 +24,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             xtype: 'rallysearchcombobox',
             storeConfig: {
                 model: TsConstants.SELECTABLE_PORTFOLIO_ITEM_TYPE,
-                autoLoad: true
+                autoLoad: true,
             },
             fieldLabel: TsConstants.SELECTABLE_PORTFOLIO_ITEM_TYPE_LABEL,
             listeners: {
@@ -57,7 +57,9 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             scope: this,
             success: function(store) {
                 // TODO (tj) use rallygridboard to get filtering plugins
-                this.down('#gridArea').add({
+                var gridArea = this.down('#gridArea');
+                gridArea.removeAll();
+                gridArea.add({
                     xtype: 'rallytreegrid',
                     store: store,
                     columnCfgs: [{
@@ -119,7 +121,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                             }
                         },
                         {
-                            text: 'Active Features Per-Team (Average)',
+                            text: TsConstants.WIP_LABEL,
                             xtype: 'templatecolumn',
                             tpl: new Ext.XTemplate(''),
                             scope: this,
@@ -134,7 +136,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     },
 
     wipRenderer: function(record) {
-        var value = record.get('WipRatio');
+        var value = record.get('FeatureWipAverage');
         var result = value;
 
         if (TsMetricsUtils.showMetrics(record) == false) {
@@ -147,16 +149,20 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             else if (isNaN(value)) {
                 result = '--'
             }
+            else if (value == Infinity) {
+                result = 0;
+            }
             else if (value > 0 && value < 1) {
                 result = 1;
             }
             else {
                 result = Math.round(value);
                 if (result >= 4) {
-                    result = '<span class="caution">' + result + '</span>';
+                    result = '<div class="colorcell caution">' + result + '</div>';
                 }
             }
         }
+        //console.log(record.get("FormattedID") + ' ' + value + ' => ' + result);
         return result;
     },
 
@@ -190,19 +196,23 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 result = 'Loading...';
             }
             else if (value > 0) {
-                result = '<span class="caution">Slower</span> by ' + value + ' Days'
+                result = this.getEmojiDiv('worse') + value + ' days slower'
             }
             else if (value < 0) {
-                result = '<span class="better">Faster</span> by ' + Math.abs(value) + ' Days'
+                result = this.getEmojiDiv('better') + Math.abs(value) + ' days faster'
             }
             else if (value == 0) {
-                result = 'Unchanged'
+                result = this.getEmojiDiv('neutral') + 'Unchanged'
             }
             else {
                 result = '--'
             }
         }
         return result;
+    },
+
+    getEmojiDiv: function(name) {
+        return '<div class="emojicell ' + name + '">' + TsSvgIcons[name] + '</div>'
     },
 
     throughputTrendRenderer: function(record, dataIndex) {
@@ -217,13 +227,13 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 result = 'Loading...';
             }
             else if (value > 0) {
-                result = '<span class="better">Faster</span> by ' + value + ' Features'
+                result = this.getEmojiDiv('better') + value + ' more Features'
             }
             else if (value < 0) {
-                result = '<span class="caution">Slower</span> by ' + Math.abs(value) + ' Features'
+                result = this.getEmojiDiv('worse') + Math.abs(value) + ' less Features'
             }
             else if (value == 0) {
-                result = 'Unchanged'
+                result = this.getEmojiDiv('neutral') + 'Unchanged'
             }
             else {
                 result = '--'
@@ -244,15 +254,24 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
 
             },
             {
-                name: TsConstants.MGMT_PROJECT_NAMES_SETTING,
-                xtype: 'textarea',
-                fieldLabel: 'Management Projects to Exclude',
-            },
-            {
                 name: TsConstants.PERIOD_LENGTH_SETTING,
                 xtype: 'numberfield',
                 fieldLabel: 'Trend Time Period (Days)'
-            }
+            },
+            {
+                name: TsConstants.INCLUDED_PROJECT_TEAM_TYPES_SETTING, // TODO: Defaults
+                xtype: 'textfield',
+                disabled: true,
+                value: 'Agile',
+                fieldLabel: 'Project Team Types to include in "' + TsConstants.WIP_LABEL + '" calculation',
+            },
+            {
+                name: TsConstants.PER_TEAM_WIP_MAX_SETTING, // TODO Defaults
+                xtype: 'textfield',
+                disabled: true,
+                value: '4',
+                fieldLabel: 'Max "' + TsConstants.WIP_LABEL + '"',
+            },
         ];
     },
 
