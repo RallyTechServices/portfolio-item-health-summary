@@ -6,9 +6,6 @@
     "artifact": "",
     "javascript": [
         "src/javascript/utils/Polyfills.js",
-        "src/javascript/utils/__ts-info-link.js",
-        "src/javascript/utils/__ts-logger.js",
-        "src/javascript/utils/__ts-utilities.js",
         "src/javascript/SvgIcons.js",
         "src/javascript/SummaryRow.js",
         "src/javascript/FeatureGroup.js",
