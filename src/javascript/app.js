@@ -17,6 +17,14 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         name: "com.ca.TechnicalServices.PortfolioItemHealthSummary"
     },
 
+    config: {
+        defaultSettings: {
+            PERIOD_LENGTH: 30,
+            INCLUDED_PROJECT_TEAM_TYPES: 'Agile', // The rallyfieldvaluecombobox saves settings as comma separated string
+            PER_TEAM_WIP_MAX: 4
+        }
+    },
+
     launch: function() {
         this.logger.setSaveForLater(this.getSetting('saveLog'));
         this.metricsMgr = new TsMetricsMgr();
@@ -38,7 +46,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     },
 
     addGrid: function(parent) {
-        var periodDays = Rally.getApp().getSetting(TsConstants.PERIOD_LENGTH_SETTING) || TsConstants.PERIOD_LENGTH_DEFAULT;
+        var periodDays = Rally.getApp().getSetting(TsConstants.SETTINGS.PERIOD_LENGTH);
         Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
             models: ['PortfolioItem/Theme'],
             autoLoad: true,
@@ -121,7 +129,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                             }
                         },
                         {
-                            text: TsConstants.WIP_LABEL,
+                            text: TsConstants.LABELS.WIP,
                             xtype: 'templatecolumn',
                             tpl: new Ext.XTemplate(''),
                             scope: this,
@@ -157,12 +165,11 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             }
             else {
                 result = Math.round(value);
-                if (result >= 4) {
+                if (result >= this.getSetting(TsConstants.SETTINGS.PER_TEAM_WIP_MAX)) {
                     result = '<div class="colorcell caution">' + result + '</div>';
                 }
             }
         }
-        //console.log(record.get("FormattedID") + ' ' + value + ' => ' + result);
         return result;
     },
 
@@ -254,23 +261,39 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
 
             },
             {
-                name: TsConstants.PERIOD_LENGTH_SETTING,
+                name: TsConstants.SETTINGS.PERIOD_LENGTH,
                 xtype: 'numberfield',
                 fieldLabel: 'Trend Time Period (Days)'
             },
             {
-                name: TsConstants.INCLUDED_PROJECT_TEAM_TYPES_SETTING, // TODO: Defaults
-                xtype: 'textfield',
-                disabled: true,
-                value: 'Agile',
-                fieldLabel: 'Project Team Types to include in "' + TsConstants.WIP_LABEL + '" calculation',
+                name: TsConstants.SETTINGS.INCLUDED_PROJECT_TEAM_TYPES,
+                xtype: 'rallyfieldvaluecombobox',
+                itemId: TsConstants.SETTINGS.INCLUDED_PROJECT_TEAM_TYPES,
+                model: 'Project',
+                field: 'c_TeamType',
+                allowBlank: false,
+                allowNoEntry: true,
+                editable: false,
+                multiSelect: true,
+                delimiter: ',',
+                listeners: {
+                    ready: function(combobox) {
+                        var store = combobox.getStore();
+                        store.on('load', function(store, records, success) {
+                            if (records.length) {
+                                var currentSetting = Rally.getApp().getSetting(TsConstants.SETTINGS.INCLUDED_PROJECT_TEAM_TYPES).split(',');
+                                combobox.setValue(currentSetting);
+                            }
+                        });
+                    }
+                },
+                readyEvent: 'ready',
+                fieldLabel: 'Project Team Types to include in "' + TsConstants.LABELS.WIP + '" calculation. One per-line. Remove all to include types.',
             },
             {
-                name: TsConstants.PER_TEAM_WIP_MAX_SETTING, // TODO Defaults
+                name: TsConstants.SETTINGS.PER_TEAM_WIP_MAX,
                 xtype: 'textfield',
-                disabled: true,
-                value: '4',
-                fieldLabel: 'Max "' + TsConstants.WIP_LABEL + '"',
+                fieldLabel: 'Max "' + TsConstants.LABELS.WIP + '"',
             },
         ];
     },

@@ -87,7 +87,7 @@ Ext.define("TsMetricsMgr", function(Stores) {
     }
 
     function getMetrics(group) {
-        var periodDays = Rally.getApp().getSetting(TsConstants.PERIOD_LENGTH_SETTING) || TsConstants.PERIOD_LENGTH_DEFAULT;
+        var periodDays = Rally.getApp().getSetting(TsConstants.SETTINGS.PERIOD_LENGTH) || TsConstants.SETTINGS.PERIOD_LENGTH;
         var today = new Date();
         var priorPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, periodDays * 2);
         var currentPeriodStart = Ext.Date.subtract(today, Ext.Date.DAY, periodDays);
@@ -148,7 +148,7 @@ Ext.define("TsMetricsMgr", function(Stores) {
             deferred.resolve(result);
         }
         else {
-            var includedTeamTypes = ['Agile']; // TOOD (tj) Get from settings
+            var includedTeamTypes = Rally.getApp().getSetting(TsConstants.SETTINGS.INCLUDED_PROJECT_TEAM_TYPES).split(',');
             var teamTypesFilters = Rally.data.wsapi.Filter.or(_.map(includedTeamTypes, function(teamType) {
                 return {
                     property: 'c_TeamType',
