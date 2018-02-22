@@ -17,6 +17,9 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         name: "com.ca.TechnicalServices.PortfolioItemHealthSummary"
     },
 
+    selectedObjectId: undefined,
+    showDonePis: true,
+
     config: {
         defaultSettings: {
             PERIOD_LENGTH: 30,
@@ -39,22 +42,57 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 scope: this,
                 change: function(control, newValue) {
                     //this.metricsMgr.onPortfolioItemChange(control.getRecord());
-                    this.addGrid(control.getRecord());
+                    this.selectedObjectId = control.getRecord().get('ObjectID');
+                    this.addGrid();
+                }
+            }
+        });
+        this.down('#controlsArea').add({
+            xtype: 'rallycheckboxfield',
+            fieldLabel: TsConstants.LABELS.SHOW_DONE_PIS,
+            value: this.showDonePis,
+            listeners: {
+                scope: this,
+                change: function(checkbox, newValue, oldValue) {
+                    if (newValue != oldValue) {
+                        this.showDonePis = newValue;
+                        this.addGrid()
+                    }
                 }
             }
         });
     },
 
-    addGrid: function(parent) {
+    addGrid: function() {
         var periodDays = Rally.getApp().getSetting(TsConstants.SETTINGS.PERIOD_LENGTH);
+        var childFilters;
+        var topLevelFilters = Ext.create('Rally.data.wsapi.Filter', {
+            property: 'Parent.ObjectID',
+            value: this.selectedObjectId
+        });
+
+        if (this.showDonePis == false) {
+            // Don't show DONE items below themes
+            var childQueries = [{
+                property: 'ActualEndDate',
+                value: 'null',
+            }];
+            _.forEach(TsConstants.SETTINGS.PI_TYPES_ALWAYS_SHOWN, function(type) {
+                childQueries.push({
+                    property: 'PortfolioItemType.TypePath',
+                    operator: '!=',
+                    value: type
+                });
+            });
+            childFilters = Rally.data.wsapi.Filter.and(childQueries);
+        }
+
         Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
             models: ['PortfolioItem/Theme'],
             autoLoad: true,
             enableHierarchy: true,
-            filters: [{
-                property: 'Parent.ObjectID',
-                value: parent.get('ObjectID')
-            }],
+            filters: topLevelFilters,
+            childFilters: childFilters, // See Overrides.js
             listeners: {
                 scope: this,
                 load: function(store, node, records) {
@@ -203,10 +241,10 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 result = 'Loading...';
             }
             else if (value > 0) {
-                result = this.getEmojiDiv('worse') + value + ' days slower'
+                result = this.getEmojiDiv('worse') + value + ' days longer'
             }
             else if (value < 0) {
-                result = this.getEmojiDiv('better') + Math.abs(value) + ' days faster'
+                result = this.getEmojiDiv('better') + Math.abs(value) + ' days shorter'
             }
             else if (value == 0) {
                 result = this.getEmojiDiv('neutral') + 'Unchanged'
@@ -237,7 +275,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 result = this.getEmojiDiv('better') + value + ' more Features'
             }
             else if (value < 0) {
-                result = this.getEmojiDiv('worse') + Math.abs(value) + ' less Features'
+                result = this.getEmojiDiv('worse') + Math.abs(value) + ' fewer Features'
             }
             else if (value == 0) {
                 result = this.getEmojiDiv('neutral') + 'Unchanged'
