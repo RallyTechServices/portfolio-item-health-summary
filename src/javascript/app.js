@@ -20,7 +20,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     config: {
         defaultSettings: {
             PERIOD_LENGTH: 30,
-            INCLUDED_PROJECT_TEAM_TYPES: ['Agile'],
+            INCLUDED_PROJECT_TEAM_TYPES: 'Agile', // The rallyfieldvaluecombobox saves settings as comma separated string
             PER_TEAM_WIP_MAX: 4
         }
     },
@@ -280,7 +280,6 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     ready: function(combobox) {
                         var store = combobox.getStore();
                         store.on('load', function(store, records, success) {
-                            console.log(records);
                             if (records.length) {
                                 var currentSetting = Rally.getApp().getSetting(TsConstants.SETTINGS.INCLUDED_PROJECT_TEAM_TYPES).split(',');
                                 combobox.setValue(currentSetting);
