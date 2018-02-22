@@ -2,10 +2,11 @@
 Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     extend: 'Rally.app.App',
     componentCls: 'app',
-    logger: new CArABU.technicalservices.Logger(),
     items: [{
             xtype: 'form',
             itemId: 'controlsArea',
+            padding: '0 0 10 0',
+            bodyPadding: 5,
         },
         {
             xtype: 'container',
@@ -29,7 +30,6 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     },
 
     launch: function() {
-        this.logger.setSaveForLater(this.getSetting('saveLog'));
         this.metricsMgr = new TsMetricsMgr();
         this.down('#controlsArea').add({
             xtype: 'rallysearchcombobox',
@@ -108,6 +108,12 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 gridArea.add({
                     xtype: 'rallytreegrid',
                     store: store,
+                    enableBulkEdit: false,
+                    enableRanking: false,
+                    enableEditing: false,
+                    enableScheduleStateClickable: false,
+                    enabledValidationUi: false,
+                    shouldShowRowActionsColumn: false,
                     columnCfgs: [{
                             text: 'Name',
                             dataIndex: 'Name',
@@ -288,20 +294,15 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     },
 
     getSettingsFields: function() {
-        var check_box_margins = '5 0 5 0';
         return [{
-                name: 'saveLog',
-                xtype: 'rallycheckboxfield',
-                boxLabelAlign: 'after',
-                fieldLabel: '',
-                margin: check_box_margins,
-                boxLabel: 'Save Logging<br/><span style="color:#999999;"><i>Save last 100 lines of log for debugging.</i></span>'
-
-            },
-            {
                 name: TsConstants.SETTINGS.PERIOD_LENGTH,
-                xtype: 'numberfield',
-                fieldLabel: 'Trend Time Period (Days)'
+                xtype: 'rallynumberfield',
+                allowBlank: false,
+                allowDecimals: false,
+                allowOnlyWhitespace: false,
+                minValue: 1,
+                label: 'Trend Time Period (Days)',
+                labelWidth: 300
             },
             {
                 name: TsConstants.SETTINGS.INCLUDED_PROJECT_TEAM_TYPES,
@@ -326,33 +327,19 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     }
                 },
                 readyEvent: 'ready',
-                fieldLabel: 'Project Team Types to include in "' + TsConstants.LABELS.WIP + '" calculation. One per-line. Remove all to include types.',
+                label: 'Project Team Types to include in "' + TsConstants.LABELS.WIP + '" calculation.',
+                labelWidth: 300
             },
             {
                 name: TsConstants.SETTINGS.PER_TEAM_WIP_MAX,
-                xtype: 'textfield',
-                fieldLabel: 'Max "' + TsConstants.LABELS.WIP + '"',
+                xtype: 'rallynumberfield',
+                allowBlank: false,
+                allowDecimals: false,
+                allowOnlyWhitespace: false,
+                minValue: 1,
+                label: 'Max "' + TsConstants.LABELS.WIP + '"',
+                labelWidth: 300
             },
         ];
     },
-
-    getOptions: function() {
-        var options = [{
-            text: 'About...',
-            handler: this._launchInfo,
-            scope: this
-        }];
-
-        return options;
-    },
-
-    _launchInfo: function() {
-        if (this.about_dialog) { this.about_dialog.destroy(); }
-
-        this.about_dialog = Ext.create('Rally.technicalservices.InfoLink', {
-            showLog: this.getSetting('saveLog'),
-            logger: this.logger
-        });
-    }
-
 });
