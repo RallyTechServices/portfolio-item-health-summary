@@ -7,6 +7,8 @@ Ext.define('TsSummaryRow', {
         { name: 'CycleTimeTrend', type: 'string', defaultValue: "Loading" },
         { name: 'ThroughputMedian', type: 'float', defaultValue: NaN },
         { name: 'ThroughputTrend', type: 'string', defaultValue: "Loading" },
-        { name: 'FeatureWipAverage', type: 'float', defaultValue: NaN }
+        { name: 'FeatureWipAverage', type: 'float', defaultValue: NaN },
+        { name: 'ActiveFeatures', type: 'int', defaultValue: NaN },
+        { name: 'TeamCount', type: 'int', defaultValue: NaN }
     ]
 });
