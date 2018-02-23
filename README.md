@@ -4,21 +4,13 @@
 
 ![screenshot](./images/screenshot.png "This is an example")
 
-## Open Questions
-* Desired name? - "Delivery Health"
-   * How well are you executing on yoru plan (from point of view of value being delivered)
-* Sure you want median?
-   * [61,93,104,112,138]
-* Note that data from mgmt projects is excluded from ALL metrics. For example "% Done by Story Count" only
-* counts features from dev projects...and does not use the rolled up data available on the Initiative/Epic
-* since that contains data from features from all projects.
-*  * Lookback can be VERY slow or never return. Consider WSAPI
-
 ## Version History
 * 0.0.1 - Initial version for basic testing
+* 1.0.0 - Filter by done items. Exclude project types from WIP. Configurable cell data.
 
-## Development Notes
-
+## Useage Notes
+* Use page settings to set a global scope.
+* Use app settings to enable additional trend and active feature metrics information.
 
 ### First Load
 
