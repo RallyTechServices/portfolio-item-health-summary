@@ -25,7 +25,9 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         defaultSettings: {
             PERIOD_LENGTH: 30,
             INCLUDED_PROJECT_TEAM_TYPES: 'Agile', // The rallyfieldvaluecombobox saves settings as comma separated string
-            PER_TEAM_WIP_MAX: 4
+            PER_TEAM_WIP_MAX: 4,
+            SHOW_WIP_RAW_DATA: false,
+            SHOW_TREND_RAW_DATA: false
         }
     },
 
@@ -37,7 +39,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 model: TsConstants.SELECTABLE_PORTFOLIO_ITEM_TYPE,
                 autoLoad: true,
             },
-            fieldLabel: TsConstants.SELECTABLE_PORTFOLIO_ITEM_TYPE_LABEL,
+            fieldLabel: TsConstants.LABELS.SELECTABLE_PORTFOLIO_ITEM_TYPE,
             listeners: {
                 scope: this,
                 change: function(control, newValue) {
@@ -93,6 +95,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             enableHierarchy: true,
             filters: topLevelFilters,
             childFilters: childFilters, // See Overrides.js
+            fetch: ['Project', 'Name', 'c_TeamType', 'Children'],
             listeners: {
                 scope: this,
                 load: function(store, node, records) {
@@ -136,7 +139,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                             }
                         },
                         {
-                            text: 'Cycle Time - Last ' + periodDays + ' Days',
+                            text: 'Cycle Time - Last ' + Ext.util.Format.plural(periodDays, 'Day', 'Days'),
                             xtype: 'templatecolumn',
                             tpl: new Ext.XTemplate(''),
                             scope: this,
@@ -154,7 +157,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                             }
                         },
                         {
-                            text: 'Throughput - Last ' + periodDays + ' Days',
+                            text: 'Throughput - Last ' + Ext.util.Format.plural(periodDays, 'Day', 'Days'),
                             xtype: 'templatecolumn',
                             tpl: new Ext.XTemplate(''),
                             scope: this,
@@ -187,6 +190,12 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         });
     },
 
+    featuresPerTeam: function(record) {
+        var featureCount = Ext.util.Format.plural(record.get('ActiveFeatures'), 'Feature', 'Features');
+        var teamCount = Ext.util.Format.plural(record.get('TeamCount'), 'Team', 'Teams');
+        return featureCount + ' ' + teamCount;
+    },
+
     wipRenderer: function(record) {
         var value = record.get('FeatureWipAverage');
         var result = value;
@@ -198,19 +207,24 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             if (value === undefined) {
                 result = 'Loading...';
             }
-            else if (isNaN(value)) {
-                result = '--'
-            }
-            else if (value == Infinity) {
-                result = 0;
-            }
-            else if (value > 0 && value < 1) {
-                result = 1;
-            }
             else {
-                result = Math.round(value);
-                if (result >= this.getSetting(TsConstants.SETTINGS.PER_TEAM_WIP_MAX)) {
-                    result = '<div class="colorcell caution">' + result + '</div>';
+                if (isNaN(value)) {
+                    result = '--'
+                }
+                else if (value == Infinity) {
+                    result = 0;
+                }
+                else if (value > 0 && value < 1) {
+                    result = 1;
+                }
+                else {
+                    result = Math.round(value);
+                    if (result >= this.getSetting(TsConstants.SETTINGS.PER_TEAM_WIP_MAX)) {
+                        result = '<div class="colorcell caution">' + result + '</div>';
+                    }
+                }
+                if (this.getSetting(TsConstants.SETTINGS.SHOW_WIP_RAW_DATA)) {
+                    result += '<div>' + this.featuresPerTeam(record) + '</div>'
                 }
             }
         }
@@ -246,17 +260,25 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             if (value === undefined) {
                 result = 'Loading...';
             }
-            else if (value > 0) {
-                result = this.getEmojiDiv('worse') + value + ' days longer'
-            }
-            else if (value < 0) {
-                result = this.getEmojiDiv('better') + Math.abs(value) + ' days shorter'
-            }
-            else if (value == 0) {
-                result = this.getEmojiDiv('neutral') + 'Unchanged'
-            }
             else {
-                result = '--'
+                if (value > 0) {
+                    result = this.getEmojiDiv('worse');
+                    if (this.getSetting(TsConstants.SETTINGS.SHOW_TREND_RAW_DATA)) {
+                        result += Ext.util.Format.plural(Math.abs(value), 'day', 'days') + ' longer';
+                    }
+                }
+                else if (value < 0) {
+                    result = this.getEmojiDiv('better');
+                    if (this.getSetting(TsConstants.SETTINGS.SHOW_TREND_RAW_DATA)) {
+                        result += Ext.util.Format.plural(Math.abs(value), 'day', 'days') + ' shorter';
+                    }
+                }
+                else if (value == 0) {
+                    result = this.getEmojiDiv('neutral') + 'Unchanged'
+                }
+                else {
+                    result = '--'
+                }
             }
         }
         return result;
@@ -278,10 +300,16 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 result = 'Loading...';
             }
             else if (value > 0) {
-                result = this.getEmojiDiv('better') + value + ' more Features'
+                result = this.getEmojiDiv('better');
+                if (this.getSetting(TsConstants.SETTINGS.SHOW_TREND_RAW_DATA)) {
+                    result += Ext.util.Format.plural(value, 'more Feature', 'more Features');
+                }
             }
             else if (value < 0) {
-                result = this.getEmojiDiv('worse') + Math.abs(value) + ' fewer Features'
+                result = this.getEmojiDiv('worse');
+                if (this.getSetting(TsConstants.SETTINGS.SHOW_TREND_RAW_DATA)) {
+                    result += Ext.util.Format.plural(Math.abs(value), 'fewer Feature', 'fewer Features');
+                }
             }
             else if (value == 0) {
                 result = this.getEmojiDiv('neutral') + 'Unchanged'
@@ -303,6 +331,12 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 minValue: 1,
                 label: 'Trend Time Period (Days)',
                 labelWidth: 300
+            },
+            {
+                name: TsConstants.SETTINGS.SHOW_TREND_RAW_DATA,
+                xtype: 'rallycheckboxfield',
+                label: TsConstants.LABELS.SHOW_TREND_RAW_DATA,
+                labelWidth: 300,
             },
             {
                 name: TsConstants.SETTINGS.INCLUDED_PROJECT_TEAM_TYPES,
@@ -340,6 +374,12 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 label: 'Max "' + TsConstants.LABELS.WIP + '"',
                 labelWidth: 300
             },
+            {
+                name: TsConstants.SETTINGS.SHOW_WIP_RAW_DATA,
+                xtype: 'rallycheckboxfield',
+                label: TsConstants.LABELS.SHOW_WIP_RAW_DATA,
+                labelWidth: 300,
+            }
         ];
     },
 });

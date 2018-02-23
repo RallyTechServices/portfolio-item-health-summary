@@ -1,9 +1,5 @@
-/* global Ext Deft _ com TsMetricsUtils Rally TsConstants TsSummaryRow*/
-// TODO (tj) make level configurable
-// TODO (tj) if at theme level are metric still a Feature Level?
+/* global Ext Deft _ com TsMetricsUtils Rally TsConstants TsSummaryRow */
 Ext.define("TsMetricsMgr", function(Stores) {
-    var selectedPortfolioItem;
-    var metrics = {};
 
     return {
         buildMetrics: buildMetrics
@@ -48,7 +44,9 @@ Ext.define("TsMetricsMgr", function(Stores) {
     function updateRecord(record, summaryRow) {
         var summaryFields = TsSummaryRow.getFields();
         _.forEach(summaryFields, function(summaryField) {
-            record.set(summaryField.name, summaryRow.get(summaryField.name));
+            if (summaryField.name != 'id') {
+                record.set(summaryField.name, summaryRow.get(summaryField.name));
+            }
         });
         return record;
     }
@@ -65,22 +63,25 @@ Ext.define("TsMetricsMgr", function(Stores) {
             var allCycleTimesMedianDays = TsMetricsUtils.getMedian(metrics.allCycleTimes);
             var priorPeriodCycleTimesMedianDays = TsMetricsUtils.getMedian(metrics.priorPeriodCycleTimes);
             var currentPeriodCycleTimesMedianDays = TsMetricsUtils.getMedian(metrics.currentPeriodCycleTimes);
-            var cycleTimesTrend = (currentPeriodCycleTimesMedianDays - priorPeriodCycleTimesMedianDays).toFixed(0);
 
             // WIP Ratio
             var featureWipAverage = 0;
             var leafProjectsHash = group.get('LeafProjectsHash');
+            var teamCount = 0;
             if (leafProjectsHash) {
-                featureWipAverage = metrics.workInProgress / Object.keys(leafProjectsHash).length;
+                teamCount = Object.keys(leafProjectsHash).length;
+                featureWipAverage = metrics.workInProgress / teamCount;
             }
 
             return Ext.create('TsSummaryRow', {
                 CycleTimeMedian: allCycleTimesMedianDays,
                 CycleTimeCurrentPeriod: currentPeriodCycleTimesMedianDays,
-                CycleTimeTrend: cycleTimesTrend,
+                CycleTimeTrend: currentPeriodCycleTimesMedianDays - priorPeriodCycleTimesMedianDays,
                 ThroughputMedian: metrics.currentPeriodThroughput,
                 ThroughputTrend: metrics.currentPeriodThroughput - metrics.priorPeriodThroughput,
-                FeatureWipAverage: featureWipAverage
+                FeatureWipAverage: featureWipAverage,
+                ActiveFeatures: metrics.workInProgress,
+                TeamCount: teamCount
             });
         });
         return summaryRows;
@@ -115,10 +116,7 @@ Ext.define("TsMetricsMgr", function(Stores) {
 
             // WIP
             if (actualStartDate && !actualEndDate) {
-                //var projectOid = value.get('Project');
-                //if (group.get('LeafProjectsHash').hasOwnProperty(projectOid)) {
                 accumulator.workInProgress++;
-                //}
             }
 
             return accumulator;
@@ -134,21 +132,23 @@ Ext.define("TsMetricsMgr", function(Stores) {
         return result;
     }
 
-    /***
-     * Public methods
-     ***/
     function getLeafProjectsHash(record) {
         var result = {};
         var objectId = record.get('Project').ObjectID;
         var deferred = Ext.create('Deft.Deferred');
 
-        if (!record.get('Project').Children || record.get('Project').Children.Count == 0) {
-            // This project IS a leaf project, include it as the count
-            result[record.get('Project').ObjectID] = record.get('Project').Name;
+        var includedTeamTypes = Rally.getApp().getSetting(TsConstants.SETTINGS.INCLUDED_PROJECT_TEAM_TYPES).split(',');
+
+        var project = record.get('Project');
+        if (!project.Children || project.Children.Count == 0) {
+            // This project IS a leaf project, include it as the count if it is the correct type
+            if (_.contains(includedTeamTypes, project.c_TeamType || '')) {
+                result[project.ObjectID] = project.Name;
+            }
             deferred.resolve(result);
         }
         else {
-            var includedTeamTypes = Rally.getApp().getSetting(TsConstants.SETTINGS.INCLUDED_PROJECT_TEAM_TYPES).split(',');
+            // This project has children projects, get the leaf-node children
             var teamTypesFilters = Rally.data.wsapi.Filter.or(_.map(includedTeamTypes, function(teamType) {
                 return {
                     property: 'c_TeamType',
