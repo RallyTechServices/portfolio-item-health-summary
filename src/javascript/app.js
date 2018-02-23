@@ -116,6 +116,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     enableEditing: false,
                     enableScheduleStateClickable: false,
                     enabledValidationUi: false,
+                    enableColumnHide: true,
                     shouldShowRowActionsColumn: false,
                     columnCfgs: [{
                             text: 'Name',
@@ -274,7 +275,10 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     }
                 }
                 else if (value == 0) {
-                    result = this.getEmojiDiv('neutral') + 'Unchanged'
+                    result = this.getEmojiDiv('neutral');
+                    if (this.getSetting(TsConstants.SETTINGS.SHOW_TREND_RAW_DATA)) {
+                        result += 'Unchanged';
+                    }
                 }
                 else {
                     result = '--'
@@ -312,7 +316,10 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 }
             }
             else if (value == 0) {
-                result = this.getEmojiDiv('neutral') + 'Unchanged'
+                result = this.getEmojiDiv('neutral');
+                if (this.getSetting(TsConstants.SETTINGS.SHOW_TREND_RAW_DATA)) {
+                    result += 'Unchanged';
+                }
             }
             else {
                 result = '--'
