@@ -4,6 +4,38 @@
 
 ![screenshot](./images/screenshot.png "This is an example")
 
+This app shows portfolio item metrics based on the Features below that portfolio item.
+
+First, a top-level PI is selected (called "Afflicate" in this case which maps to a Agile
+Central "Group" PI type). Then the next level down PIs are shown in a tree. These root
+items do not calculate metrics.
+
+### Metrics
+Expand a PI to see its descendent PIs and their metrics:
+1. **Cycle Time Overall Median** - Calculate the number of days between ActualStartDate and ActualEndDate
+for all features below the PI. Display the median value.
+1. **Cycle Time - Last N Days** - Display the Median cycle time for all Features that have an ActualEndDate
+within the prior N days. The feature may have started long ago, but finished within the last N days.
+1. **Cycle Time - N Day Trend** - Compare the median cycle time from the most recent N day period with the value for the
+N day period before that. If the median is getter lower, display a smile icon; if the same, a neutral icon; if worse a
+sad icon.
+1. **Throughput - Last N Days** - Count the number of Features that have an ActualEndDate within the last N days.
+1. **Throughput - N Day Trend** - Compare the throughput in the last N day period with the N day period before that. If
+throughput is increasing, display a smile icon; if the same, a neutral icon; if worse a sad icon.
+1. **Active Features Per-Team (Average)** - For each PI, count the number of Features with an ActualStartDate but no ActualEndDate.
+Also, count the number of teams of the "allowed" types (see settings) that are in the project hierarcy at or below the project
+that owns the PI. Divide the number of active features by the number of teams below the PI owning project. Highlight values
+larger than a desired threshold (see settings).
+
+### Settings
+* **Trend Time Period (Days)** - Set the number of days to use when computing trend metrics
+* **Show Trend Values** - include the raw values in addition to the trend icons
+* **Project Team Types...* - Select the values from the Project.c_TeamType attribute that should be included when counting
+teams for the **Active Features Per-Team** metric.
+* **Max "Active Features Per-Team"** - Set the threshold for the number of features per team. Values at or above this will
+be highlighted in the chart.
+* **Show Active Features and Team counts** - Show the raw values for the Active Features Per-Team metric.
+
 ## Version History
 * 0.0.1 - Initial version for basic testing
 * 1.0.0 - Filter by done items. Exclude project types from WIP. Configurable cell data.
