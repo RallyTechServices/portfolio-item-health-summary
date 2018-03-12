@@ -4,6 +4,9 @@
 Ext.define("TsConstants", {
 
     statics: {
+        ID: {
+            PORTFOLIO_ITEM_TYPE_STATE: 'PORTFOLIO_ITEM_TYPE_STATE'
+        },
         SETTINGS: {
             PERIOD_LENGTH: 'PERIOD_LENGTH',
             INCLUDED_PROJECT_TEAM_TYPES: 'INCLUDED_PROJECT_TEAM_TYPES',

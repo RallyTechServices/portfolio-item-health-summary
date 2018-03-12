@@ -39,6 +39,8 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 model: TsConstants.SELECTABLE_PORTFOLIO_ITEM_TYPE,
                 autoLoad: true,
             },
+            stateful: true,
+            stateId: TsConstants.ID.PORTFOLIO_ITEM_TYPE_STATE,
             fieldLabel: TsConstants.LABELS.SELECTABLE_PORTFOLIO_ITEM_TYPE,
             listeners: {
                 scope: this,
@@ -131,7 +133,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                             dataIndex: 'PercentDoneByStoryCount'
                         },
                         {
-                            text: 'Cycle Time - Overall Median (Days)',
+                            text: 'Feature Cycle Time - Overall Median (Days)',
                             xtype: 'templatecolumn',
                             tpl: new Ext.XTemplate(''),
                             scope: this,
@@ -140,7 +142,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                             }
                         },
                         {
-                            text: 'Cycle Time - Last ' + Ext.util.Format.plural(periodDays, 'Day', 'Days'),
+                            text: 'Feature Cycle Time - Last ' + Ext.util.Format.plural(periodDays, 'Day', 'Days'),
                             xtype: 'templatecolumn',
                             tpl: new Ext.XTemplate(''),
                             scope: this,
@@ -149,7 +151,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                             }
                         },
                         {
-                            text: 'Cycle Time - ' + periodDays + ' Day Trend',
+                            text: 'Feature Cycle Time - ' + periodDays + ' Day Trend',
                             tpl: '{CycleTimeTrend}',
                             xtype: 'templatecolumn',
                             scope: this,
@@ -158,7 +160,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                             }
                         },
                         {
-                            text: 'Throughput - Last ' + Ext.util.Format.plural(periodDays, 'Day', 'Days'),
+                            text: 'Feature Throughput - Last ' + Ext.util.Format.plural(periodDays, 'Day', 'Days'),
                             xtype: 'templatecolumn',
                             tpl: new Ext.XTemplate(''),
                             scope: this,
@@ -168,7 +170,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
 
                         },
                         {
-                            text: 'Throughput - ' + periodDays + ' Day Trend',
+                            text: 'Feature Throughput - ' + periodDays + ' Day Trend',
                             tpl: '{ThroughputTrend}',
                             xtype: 'templatecolumn',
                             scope: this,
