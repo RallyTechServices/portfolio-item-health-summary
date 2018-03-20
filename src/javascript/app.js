@@ -204,7 +204,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         var result = value;
 
         if (TsMetricsUtils.showMetrics(record) == false) {
-            result = '--'
+            result= TsConstants.LABELS.NOT_APPLICABLE;
         }
         else {
             if (value === undefined) {
@@ -212,7 +212,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             }
             else {
                 if (isNaN(value)) {
-                    result = '--'
+                    result = TsConstants.LABELS.NO_VALUE;
                 }
                 else if (value == Infinity) {
                     result = 0;
@@ -239,14 +239,14 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         var result = value;
 
         if (TsMetricsUtils.showMetrics(record) == false) {
-            result = '--'
+            result = TsConstants.LABELS.NOT_APPLICABLE;
         }
         else {
             if (value === undefined) {
                 result = 'Loading...';
             }
             else if (isNaN(value)) {
-                result = '--'
+                result = TsConstants.LABELS.NO_VALUE;
             }
         }
         return result;
@@ -257,7 +257,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         var result = value;
 
         if (TsMetricsUtils.showMetrics(record) == false) {
-            result = '--'
+            result = TsConstants.LABELS.NOT_APPLICABLE;
         }
         else {
             if (value === undefined) {
@@ -283,7 +283,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     }
                 }
                 else {
-                    result = '--'
+                    result = TsConstants.LABELS.NO_VALUE;
                 }
             }
         }
@@ -299,7 +299,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         var result = value;
 
         if (TsMetricsUtils.showMetrics(record) == false) {
-            result = '--'
+            result = TsConstants.LABELS.NOT_APPLICABLE;
         }
         else {
             if (value === undefined) {
@@ -324,7 +324,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 }
             }
             else {
-                result = '--'
+                result = TsConstants.LABELS.NO_VALUE;
             }
         }
         return result;
