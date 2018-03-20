@@ -22,6 +22,8 @@ Ext.define("TsConstants", {
             SHOW_TREND_RAW_DATA: 'Show Trend Values',
             SHOW_DONE_PIS: 'Show Done Items',
             SELECTABLE_PORTFOLIO_ITEM_TYPE: 'Affiliate',
+            NOT_APPLICABLE: '--',
+            NO_VALUE: '0'
         },
 
         SELECTABLE_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Group',
