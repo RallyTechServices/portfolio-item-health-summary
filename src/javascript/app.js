@@ -191,11 +191,11 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         });
     },
 
-    viewChange() {
+    viewChange: function() {
         this.addGrid();
     },
 
-    getColumnCfgs() {
+    getColumnCfgs: function() {
         // Currently mostly derived columns. The column picker will add other standard columns
         return TsConstants.DEFAULT_COLUMNS.concat(this.getDerivedColumnCfgs());
     },
