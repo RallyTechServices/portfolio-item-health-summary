@@ -10,6 +10,14 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         },
         {
             xtype: 'container',
+            itemId: 'gridControlArea'
+        },
+        {
+            xtype: 'container',
+            itemId: 'filtersControlArea'
+        },
+        {
+            xtype: 'container',
             itemId: 'gridArea'
         },
     ],
@@ -40,7 +48,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 autoLoad: true,
             },
             stateful: true,
-            stateId: TsConstants.ID.PORTFOLIO_ITEM_TYPE_STATE,
+            stateId: this.getContext().getScopedStateId(TsConstants.ID.PORTFOLIO_ITEM_TYPE_STATE),
             fieldLabel: TsConstants.LABELS.SELECTABLE_PORTFOLIO_ITEM_TYPE,
             listeners: {
                 scope: this,
@@ -51,6 +59,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 }
             }
         });
+
         this.down('#controlsArea').add({
             xtype: 'rallycheckboxfield',
             fieldLabel: TsConstants.LABELS.SHOW_DONE_PIS,
@@ -60,21 +69,37 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                 change: function(checkbox, newValue, oldValue) {
                     if (newValue != oldValue) {
                         this.showDonePis = newValue;
-                        this.addGrid()
+                        this.addGrid();
                     }
                 }
             }
         });
     },
 
+    addInlineFilterPanel: function(panel) {
+        this.down('#filtersControlArea').add(panel);
+    },
+
+    getFiltersFromButton: function() {
+        var filterButton = this.down('rallyinlinefilterbutton');
+        if (filterButton && filterButton.inlineFilterPanel && filterButton.getWsapiFilter()) {
+            return filterButton.getWsapiFilter();
+        }
+
+        return null;
+    },
+
     addGrid: function() {
-        var periodDays = Rally.getApp().getSetting(TsConstants.SETTINGS.PERIOD_LENGTH);
-        var childFilters;
-        var topLevelFilters = Ext.create('Rally.data.wsapi.Filter', {
+        var filters = [{
             property: 'Parent.ObjectID',
             value: this.selectedObjectId
-        });
+        }];
+        var timeboxScope = this.getContext().getTimeboxScope();
+        if (timeboxScope) {
+            filters.push(timeboxScope.getQueryFilter());
+        }
 
+        var childFilters;
         if (this.showDonePis == false) {
             // Don't show DONE items below themes
             var childQueries = [{
@@ -92,10 +117,10 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         }
 
         Ext.create('Rally.data.wsapi.TreeStoreBuilder').build({
-            models: ['PortfolioItem/Theme'],
-            autoLoad: true,
+            models: TsConstants.DISPLAYED_PORTFOLIO_ITEM_TYPES,
+            autoLoad: false,
             enableHierarchy: true,
-            filters: topLevelFilters,
+            filters: filters,
             childFilters: childFilters, // See Overrides.js
             fetch: ['Project', 'Name', 'c_TeamType', 'Children'],
             listeners: {
@@ -107,90 +132,126 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         }).then({
             scope: this,
             success: function(store) {
-                // TODO (tj) use rallygridboard to get filtering plugins
                 var gridArea = this.down('#gridArea');
                 gridArea.removeAll();
                 gridArea.add({
-                    xtype: 'rallytreegrid',
-                    store: store,
-                    enableBulkEdit: false,
-                    enableRanking: false,
-                    enableEditing: false,
-                    enableScheduleStateClickable: false,
-                    enabledValidationUi: false,
-                    enableColumnHide: true,
-                    shouldShowRowActionsColumn: false,
-                    columnCfgs: [{
-                            text: 'Name',
-                            dataIndex: 'Name',
-                        },
-                        {
-                            text: '% Complete by Story Points',
-                            dataIndex: 'PercentDoneByStoryPlanEstimate',
-                        },
-                        {
-                            text: '% Complete by Story Count',
-                            dataIndex: 'PercentDoneByStoryCount'
-                        },
-                        {
-                            text: 'Feature Cycle Time - Overall Median (Days)',
-                            xtype: 'templatecolumn',
-                            tpl: new Ext.XTemplate(''),
-                            scope: this,
-                            renderer: function(value, meta, record) {
-                                return this.nanRenderer(record, 'CycleTimeMedian');
+                    xtype: 'rallygridboard',
+                    context: this.getContext(),
+                    modelNames: TsConstants.DISPLAYED_PORTFOLIO_ITEM_TYPES,
+                    toggleState: 'grid',
+                    height: 500,
+                    listeners: {
+                        scope: this,
+                        viewchange: this.viewChange,
+                    },
+                    plugins: [{
+                            ptype: 'rallygridboardinlinefiltercontrol',
+                            inlineFilterButtonConfig: {
+                                stateful: true,
+                                stateId: this.getContext().getScopedStateId('filters'),
+                                modelNames: TsConstants.DISPLAYED_PORTFOLIO_ITEM_TYPES,
+                                filterChildren: true,
+                                inlineFilterPanelConfig: {
+                                    quickFilterPanelConfig: {
+                                        fieldNames: ['Owner', 'ScheduleState'],
+                                        initialFilters: filters
+                                    }
+                                }
                             }
                         },
                         {
-                            text: 'Feature Cycle Time - Last ' + Ext.util.Format.plural(periodDays, 'Day', 'Days'),
-                            xtype: 'templatecolumn',
-                            tpl: new Ext.XTemplate(''),
-                            scope: this,
-                            renderer: function(value, meta, record) {
-                                return this.nanRenderer(record, 'CycleTimeCurrentPeriod');
-                            }
+                            ptype: 'rallygridboardfieldpicker',
+                            headerPosition: 'left',
                         },
                         {
-                            text: 'Feature Cycle Time - ' + periodDays + ' Day Trend',
-                            tpl: '{CycleTimeTrend}',
-                            xtype: 'templatecolumn',
-                            scope: this,
-                            renderer: function(value, meta, record) {
-                                return this.cycleTimeTrendRenderer(record, 'CycleTimeTrend');
-                            }
-                        },
-                        {
-                            text: 'Feature Throughput - Last ' + Ext.util.Format.plural(periodDays, 'Day', 'Days'),
-                            xtype: 'templatecolumn',
-                            tpl: new Ext.XTemplate(''),
-                            scope: this,
-                            renderer: function(value, meta, record) {
-                                return this.nanRenderer(record, 'ThroughputMedian');
-                            }
-
-                        },
-                        {
-                            text: 'Feature Throughput - ' + periodDays + ' Day Trend',
-                            tpl: '{ThroughputTrend}',
-                            xtype: 'templatecolumn',
-                            scope: this,
-                            renderer: function(value, meta, record) {
-                                return this.throughputTrendRenderer(record, 'ThroughputTrend');
-                            }
-                        },
-                        {
-                            text: TsConstants.LABELS.WIP,
-                            xtype: 'templatecolumn',
-                            tpl: new Ext.XTemplate(''),
-                            scope: this,
-                            renderer: function(value, meta, record) {
-                                return this.wipRenderer(record);
+                            ptype: 'rallygridboardsharedviewcontrol',
+                            sharedViewConfig: {
+                                stateful: true,
+                                stateId: this.getContext().getScopedStateId('release-planning-shared-view'),
                             }
                         }
-                    ]
+                    ],
+                    gridConfig: {
+                        store: store,
+                        storeConfig: {
+                            filters: filters
+                        },
+                        enableBulkEdit: false,
+                        enableRanking: false,
+                        enableEditing: false,
+                        enableScheduleStateClickable: false,
+                        enabledValidationUi: false,
+                        enableColumnHide: true,
+                        shouldShowRowActionsColumn: false,
+                        columnCfgs: this.getColumnCfgs(),
+                        derivedColumnCfgs: this.getDerivedColumnCfgs()
+                    }
                 });
             }
         });
+    },
+
+    viewChange() {
+        this.addGrid();
+    },
+
+    getColumnCfgs() {
+        // Currently mostly derived columns. The column picker will add other standard columns
+        return TsConstants.DEFAULT_COLUMNS.concat(this.getDerivedColumnCfgs());
+    },
+
+    getDerivedColumnCfgs: function() {
+        var periodDays = Rally.getApp().getSetting(TsConstants.SETTINGS.PERIOD_LENGTH);
+        return [{
+            text: 'Feature Cycle Time - Overall Median (Days)',
+            xtype: 'templatecolumn',
+            tpl: new Ext.XTemplate(''),
+            scope: this,
+            renderer: function(value, meta, record) {
+                return this.nanRenderer(record, 'CycleTimeMedian');
+            }
+        }, {
+            text: 'Feature Cycle Time - Last ' + Ext.util.Format.plural(periodDays, 'Day', 'Days'),
+            xtype: 'templatecolumn',
+            tpl: new Ext.XTemplate(''),
+            scope: this,
+            renderer: function(value, meta, record) {
+                return this.nanRenderer(record, 'CycleTimeCurrentPeriod');
+            }
+        }, {
+            text: 'Feature Cycle Time - ' + periodDays + ' Day Trend',
+            tpl: '{CycleTimeTrend}',
+            xtype: 'templatecolumn',
+            scope: this,
+            renderer: function(value, meta, record) {
+                return this.cycleTimeTrendRenderer(record, 'CycleTimeTrend');
+            }
+        }, {
+            text: 'Feature Throughput - Last ' + Ext.util.Format.plural(periodDays, 'Day', 'Days'),
+            xtype: 'templatecolumn',
+            tpl: new Ext.XTemplate(''),
+            scope: this,
+            renderer: function(value, meta, record) {
+                return this.nanRenderer(record, 'ThroughputMedian');
+            }
+
+        }, {
+            text: 'Feature Throughput - ' + periodDays + ' Day Trend',
+            tpl: '{ThroughputTrend}',
+            xtype: 'templatecolumn',
+            scope: this,
+            renderer: function(value, meta, record) {
+                return this.throughputTrendRenderer(record, 'ThroughputTrend');
+            }
+        }, {
+            text: TsConstants.LABELS.WIP,
+            xtype: 'templatecolumn',
+            tpl: new Ext.XTemplate(''),
+            scope: this,
+            renderer: function(value, meta, record) {
+                return this.wipRenderer(record);
+            }
+        }];
     },
 
     featuresPerTeam: function(record) {
@@ -204,7 +265,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         var result = value;
 
         if (TsMetricsUtils.showMetrics(record) == false) {
-            result= TsConstants.LABELS.NOT_APPLICABLE;
+            result = TsConstants.LABELS.NOT_APPLICABLE;
         }
         else {
             if (value === undefined) {

@@ -1,10 +1,12 @@
 {
     "name": "Portfolio Item Health Summary",
     "sdk": "2.1",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "className": "com.ca.TechnicalServices.PortfolioItemHealthSummary",
     "artifact": "",
     "javascript": [
+        "node_modules/@agile-central-technical-services/utils-treegrid-derived-columns/index.js",
+        "src/javascript/utils/Overrides.js",
         "src/javascript/utils/Polyfills.js",
         "src/javascript/SvgIcons.js",
         "src/javascript/SummaryRow.js",

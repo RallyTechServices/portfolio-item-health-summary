@@ -25,9 +25,11 @@ Ext.define("TsConstants", {
             NOT_APPLICABLE: '--',
             NO_VALUE: '0'
         },
-
+        PORTFOLIO_ITEM_TYPES: ['PortfolioItem/Theme', 'PortfolioItem/Initiative', 'PortfolioItem/Epic', 'PortfolioItem/Feature'],
+        DISPLAYED_PORTFOLIO_ITEM_TYPES: ['PortfolioItem/Theme'],
         SELECTABLE_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Group',
         ROW_METRICS_PORTFOLIO_ITEM_TYPE: 'PortfolioItem/Feature',
+        DEFAULT_COLUMNS: ['FormattedID', 'Name', 'PercentDoneByStoryPlanEstimate', 'PercentDoneByStoryCount']
     }
 
 });
