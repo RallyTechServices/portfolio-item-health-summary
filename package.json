@@ -1,7 +1,7 @@
 {
   "_comment": "This file is used by grunt",
   "name": "tsabc",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "scripts": {
     "debug": "grunt debug",
     "debug:watch": "nodemon --exec grunt debug",
@@ -9,7 +9,9 @@
     "deploy-pretty:watch": "nodemon --exec grunt deploy-pretty",
     "deploy-debugsdk:watch": "nodemon --exec grunt deploy-debugsdk"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@agile-central-technical-services/utils-treegrid-derived-columns": "^1.0.0"
+  },
   "devDependencies": {
     "grunt": "~1.0.1",
     "grunt-cli": "1.2.0",
@@ -25,7 +27,9 @@
     "username": "2.1.0"
   },
   "nodemonConfig": {
-    "watch": ["src/*"],
+    "watch": [
+      "src/*"
+    ],
     "verbose": true
   }
 }

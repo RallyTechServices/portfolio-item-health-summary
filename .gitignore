@@ -2,7 +2,9 @@
 .grunt/
 grunt/
 /node_modules/
-auth.json*
+auth.json*,
+auth*.json,
+auth.json
 App-debug.html
 _SpecRunner.html
 /test/logs/
