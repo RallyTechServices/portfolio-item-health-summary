@@ -3,22 +3,35 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     extend: 'Rally.app.App',
     componentCls: 'app',
     items: [{
-            xtype: 'form',
+            xtype: 'container',
             itemId: 'controlsArea',
+            layout: {
+                type: 'hbox',
+            },
+            items: [{
+                    xtype: 'container',
+                    itemId: 'selectorArea',
+                },
+                {
+                    xtype: 'container',
+                    itemId: 'padding1',
+                    flex: 1
+                }, {
+                    xtype: 'container',
+                    itemId: 'showDoneArea',
+                }
+            ],
             padding: '0 0 10 0',
             bodyPadding: 5,
         },
         {
             xtype: 'container',
-            itemId: 'gridControlArea'
-        },
-        {
-            xtype: 'container',
-            itemId: 'filtersControlArea'
-        },
-        {
-            xtype: 'container',
-            itemId: 'gridArea'
+            itemId: 'gridArea',
+            layout: {
+                type: 'vbox',
+                align: 'stretch'
+            },
+            flex: 1
         },
     ],
 
@@ -40,8 +53,9 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     },
 
     launch: function() {
+        this.on('resize', this.onAppResize);
         this.metricsMgr = new TsMetricsMgr();
-        this.down('#controlsArea').add({
+        this.down('#selectorArea').add({
             xtype: 'rallysearchcombobox',
             storeConfig: {
                 model: TsConstants.SELECTABLE_PORTFOLIO_ITEM_TYPE,
@@ -60,7 +74,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             }
         });
 
-        this.down('#controlsArea').add({
+        this.down('#showDoneArea').add({
             xtype: 'rallycheckboxfield',
             fieldLabel: TsConstants.LABELS.SHOW_DONE_PIS,
             value: this.showDonePis,
@@ -76,17 +90,11 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         });
     },
 
-    addInlineFilterPanel: function(panel) {
-        this.down('#filtersControlArea').add(panel);
-    },
-
-    getFiltersFromButton: function() {
-        var filterButton = this.down('rallyinlinefilterbutton');
-        if (filterButton && filterButton.inlineFilterPanel && filterButton.getWsapiFilter()) {
-            return filterButton.getWsapiFilter();
+    onAppResize: function(app, width, height) {
+        var gridboard = this.down('rallygridboard');
+        if (gridboard) {
+            gridboard.setSize(width, this.getGridHeight());
         }
-
-        return null;
     },
 
     addGrid: function() {
@@ -139,7 +147,6 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                     context: this.getContext(),
                     modelNames: TsConstants.DISPLAYED_PORTFOLIO_ITEM_TYPES,
                     toggleState: 'grid',
-                    height: 500,
                     listeners: {
                         scope: this,
                         viewchange: this.viewChange,
@@ -185,10 +192,15 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                         shouldShowRowActionsColumn: false,
                         columnCfgs: this.getColumnCfgs(),
                         derivedColumnCfgs: this.getDerivedColumnCfgs()
-                    }
+                    },
+                    height: this.getGridHeight()
                 });
             }
         });
+    },
+
+    getGridHeight: function() {
+        return this.getHeight() - this.down('#controlsArea').getHeight() - 150 // TODO (tj) find dynamic sizing for gridboard]
     },
 
     viewChange: function() {
