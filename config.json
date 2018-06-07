@@ -1,7 +1,7 @@
 {
     "name": "Portfolio Item Health Summary",
     "sdk": "2.1",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "className": "com.ca.TechnicalServices.PortfolioItemHealthSummary",
     "artifact": "",
     "javascript": [

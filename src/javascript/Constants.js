@@ -21,9 +21,10 @@ Ext.define("TsConstants", {
             SHOW_WIP_RAW_DATA: 'Show Active Features and Team counts',
             SHOW_TREND_RAW_DATA: 'Show Trend Values',
             SHOW_DONE_PIS: 'Show Done Items',
-            SELECTABLE_PORTFOLIO_ITEM_TYPE: 'Affiliate',
+            SELECTABLE_PORTFOLIO_ITEM_TYPE: 'Affiliate:',
             NOT_APPLICABLE: '--',
-            NO_VALUE: '0'
+            NO_VALUE: '0',
+            VIEW: 'View:',
         },
         PORTFOLIO_ITEM_TYPES: ['PortfolioItem/Theme', 'PortfolioItem/Initiative', 'PortfolioItem/Epic', 'PortfolioItem/Feature'],
         DISPLAYED_PORTFOLIO_ITEM_TYPES: ['PortfolioItem/Theme'],
