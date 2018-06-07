@@ -2,6 +2,10 @@
 Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     extend: 'Rally.app.App',
     componentCls: 'app',
+    layout: {
+        type: 'vbox',
+        align: 'stretch'
+    },
     items: [{
             xtype: 'container',
             itemId: 'controlsArea',
@@ -28,8 +32,7 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
             xtype: 'container',
             itemId: 'gridArea',
             layout: {
-                type: 'vbox',
-                align: 'stretch'
+                type: 'fit'
             },
             flex: 1
         },
@@ -53,23 +56,30 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
     },
 
     launch: function() {
-        this.on('resize', this.onAppResize);
         this.metricsMgr = new TsMetricsMgr();
-        this.down('#selectorArea').add({
+        var selectorArea = this.down('#selectorArea');
+        var app = Rally.getApp();
+        var context = app.getContext();
+        selectorArea.add({
             xtype: 'rallysearchcombobox',
             storeConfig: {
                 model: TsConstants.SELECTABLE_PORTFOLIO_ITEM_TYPE,
                 autoLoad: true,
             },
             stateful: true,
-            stateId: this.getContext().getScopedStateId(TsConstants.ID.PORTFOLIO_ITEM_TYPE_STATE),
+            stateId: context.getScopedStateId(TsConstants.ID.PORTFOLIO_ITEM_TYPE_STATE),
             fieldLabel: TsConstants.LABELS.SELECTABLE_PORTFOLIO_ITEM_TYPE,
+            margin: '3 9 3 0',
+            labelWidth: 50,
+            allowBlank: true,
+            allowNoEntry: true,
+            allowClear: false,
+            //value: app.rawValue,
             listeners: {
                 scope: this,
-                change: function(control, newValue) {
-                    //this.metricsMgr.onPortfolioItemChange(control.getRecord());
-                    this.selectedObjectId = control.getRecord().get('ObjectID');
-                    this.addGrid();
+                change: function(control, newValue, oldValue) {
+                    app.selectedObjectId = control.getRecord().get('ObjectID');
+                    app.addGrid();
                 }
             }
         });
@@ -77,24 +87,18 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
         this.down('#showDoneArea').add({
             xtype: 'rallycheckboxfield',
             fieldLabel: TsConstants.LABELS.SHOW_DONE_PIS,
-            value: this.showDonePis,
+            value: app.showDonePis,
             listeners: {
                 scope: this,
                 change: function(checkbox, newValue, oldValue) {
                     if (newValue != oldValue) {
-                        this.showDonePis = newValue;
-                        this.addGrid();
+                        app.showDonePis = newValue;
+                        app.addGrid();
                     }
                 }
             }
-        });
-    },
-
-    onAppResize: function(app, width, height) {
-        var gridboard = this.down('rallygridboard');
-        if (gridboard) {
-            gridboard.setSize(width, this.getGridHeight());
-        }
+        })
+        //this.addGrid();
     },
 
     addGrid: function() {
@@ -152,8 +156,23 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                         viewchange: this.viewChange,
                     },
                     plugins: [{
+                            ptype: 'rallygridboardsharedviewcontrol',
+                            headerPosition: 'right',
+                            sharedViewConfig: {
+                                fieldLabel: 'View:',
+                                labelWidth: 40,
+                                stateful: true,
+                                stateId: this.getContext().getScopedStateId('release-planning-shared-view'),
+                            }
+                        }, {
+                            ptype: 'rallygridboardfieldpicker',
+                            headerPosition: 'right',
+                        },
+                        {
                             ptype: 'rallygridboardinlinefiltercontrol',
+                            headerPosition: 'right',
                             inlineFilterButtonConfig: {
+                                margin: '3 9 3 0',
                                 stateful: true,
                                 stateId: this.getContext().getScopedStateId('filters'),
                                 modelNames: TsConstants.DISPLAYED_PORTFOLIO_ITEM_TYPES,
@@ -166,17 +185,6 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                                 }
                             }
                         },
-                        {
-                            ptype: 'rallygridboardfieldpicker',
-                            headerPosition: 'left',
-                        },
-                        {
-                            ptype: 'rallygridboardsharedviewcontrol',
-                            sharedViewConfig: {
-                                stateful: true,
-                                stateId: this.getContext().getScopedStateId('release-planning-shared-view'),
-                            }
-                        }
                     ],
                     gridConfig: {
                         store: store,
@@ -193,14 +201,9 @@ Ext.define("com.ca.TechnicalServices.PortfolioItemHealthSummary", {
                         columnCfgs: this.getColumnCfgs(),
                         derivedColumnCfgs: this.getDerivedColumnCfgs()
                     },
-                    height: this.getGridHeight()
                 });
             }
         });
-    },
-
-    getGridHeight: function() {
-        return this.getHeight() - this.down('#controlsArea').getHeight() - 150 // TODO (tj) find dynamic sizing for gridboard]
     },
 
     viewChange: function() {
