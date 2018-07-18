@@ -23,7 +23,7 @@ sad icon.
 1. **Throughput - N Day Trend** - Compare the throughput in the last N day period with the N day period before that. If
 throughput is increasing, display a smile icon; if the same, a neutral icon; if worse a sad icon.
 1. **Active Features Per-Team (Average)** - For each PI, count the number of Features with an ActualStartDate but no ActualEndDate.
-Also, count the number of teams of the "allowed" types (see settings) that are in the project hierarcy at or below the project
+Also, count the number of teams of the "allowed" types (see settings) that are in the project hierarchy at or below the project
 that owns the PI. Divide the number of active features by the number of teams below the PI owning project. Highlight values
 larger than a desired threshold (see settings).
 
@@ -40,7 +40,7 @@ be highlighted in the chart.
 * 0.0.1 - Initial version for basic testing
 * 1.0.0 - Filter by done items. Exclude project types from WIP. Configurable cell data.
 
-## Useage Notes
+## Usage Notes
 * Use page settings to set a global scope.
 * Use app settings to enable additional trend and active feature metrics information.
 
