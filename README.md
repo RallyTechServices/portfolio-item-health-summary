@@ -6,7 +6,7 @@
 
 This app shows portfolio item metrics based on the Features below that portfolio item.
 
-First, a top-level PI is selected (called "Afflicate" in this case which maps to a Agile
+First, a top-level PI is selected (called "Affiliate" in this case which maps to a Agile
 Central "Group" PI type). Then the next level down PIs are shown in a tree. These root
 items do not calculate metrics.
 
